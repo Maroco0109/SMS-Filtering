@@ -1,2 +1,8 @@
 # .cache 폴더 무시(모델 생성)
 .cache/
+
+# .csv 데이터셋 무시
+*.csv
+
+# .xlsx 데이터셋 무시
+*.xlsx
