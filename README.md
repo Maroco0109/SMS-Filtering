@@ -28,8 +28,33 @@
 
 ## 📂 Directory Structure
 
-```
-Spam SMS Filtering/ ├── data/ # 원본 및 전처리 데이터 저장 │ ├── raw/ # 원본 데이터 │ └── preprocessed/ # 전처리된 데이터 ├── notebooks/ # 주피터 노트북 파일 저장 │ ├── KoBERT_Practice.ipynb │ ├── data_split.ipynb │ ├── dataset.ipynb │ ├── spam_preprocessing.ipynb │ ├── ham_preprocessing.ipynb │ └── ham_xlsx.ipynb ├── scripts/ # 주요 기능을 담당하는 Python 모듈 │ ├── init.py # 패키지 초기화 파일 │ ├── data_split.py # 데이터셋 분할 관련 코드 │ ├── data_preprocessing.py # 스팸/햄 데이터 전처리 관련 코드 │ ├── merge_dataset.py # 데이터 병합 관련 코드 │ ├── model_training.py # KoBERT 모델 학습 코드 │ ├── evaluation.py # 모델 평가 관련 코드 │ └── utils.py # 공통 유틸리티 함수 ├── tests/ # 테스트 코드 │ ├── test_data_preprocessing.py # 데이터 전처리 테스트 │ ├── test_model_training.py # 모델 학습 테스트 │ └── test_merge_dataset.py # 데이터 병합 테스트 ├── requirements.txt # 필요한 Python 패키지 리스트 ├── main.py # 전체 워크플로우를 실행하는 스크립트 └── README.md # 프로젝트 설명
+```bash
+Spam SMS Filtering/
+├── data/ # 원본 및 전처리 데이터 저장
+│ ├── raw/ # 원본 데이터
+│ └── preprocessed/ # 전처리된 데이터
+├── notebooks/ # 주피터 노트북 파일 저장
+│ ├── KoBERT_Practice.ipynb
+│ ├── data_split.ipynb
+│ ├── dataset.ipynb
+│ ├── spam_preprocessing.ipynb
+│ ├── ham_preprocessing.ipynb
+│ └── ham_xlsx.ipynb
+├── scripts/ # 주요 기능을 담당하는 Python 모듈
+│ ├── init.py # 패키지 초기화 파일
+│ ├── data_split.py # 데이터셋 분할 관련 코드
+│ ├── data_preprocessing.py # 스팸/햄 데이터 전처리 관련 코드
+│ ├── merge_dataset.py # 데이터 병합 관련 코드
+│ ├── model_training.py # KoBERT 모델 학습 코드
+│ ├── evaluation.py # 모델 평가 관련 코드
+│ └── utils.py # 공통 유틸리티 함수
+├── tests/ # 테스트 코드
+│ ├── test_data_preprocessing.py # 데이터 전처리 테스트
+│ ├── test_model_training.py # 모델 학습 테스트
+│ └── test_merge_dataset.py # 데이터 병합 테스트
+├── requirements.txt # 필요한 Python 패키지 리스트
+├── main.py # 전체 워크플로우를 실행하는 스크립트
+└── README.md # 프로젝트 설명
 ```
 
 ## 📋 Description
