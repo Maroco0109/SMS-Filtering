@@ -5,13 +5,18 @@ import torch.nn.functional as F
 
 # KoBERT 모델 정의
 class BERTClassifier(nn.Module):
-    def __init__(self, bert, hidden_size=768, num_classes=2, dr_rate=0.5):
+    def __init__(self, bert):
         super(BERTClassifier, self).__init__()
-        self.bert = bert
-        self.dr_rate = dr_rate
-        self.classifier = nn.Linear(hidden_size, num_classes)
-        if dr_rate:
-            self.dropout = nn.Dropout(p=dr_rate)
+        self.bert = bert  # Pre-trained BERT 모델
+        self.classifier = nn.Sequential(
+            nn.Linear(bert.config.hidden_size, 256),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(128, 2)  # 이진 분류
+        )
 
     def forward(self, input_ids, attention_mask, token_type_ids):
         outputs = self.bert(
@@ -19,9 +24,7 @@ class BERTClassifier(nn.Module):
             attention_mask=attention_mask,
             token_type_ids=token_type_ids
         )
-        pooled_output = outputs[1]  # CLS token output
-        if self.dr_rate:
-            pooled_output = self.dropout(pooled_output)
+        pooled_output = outputs.pooler_output  # [CLS] 토큰의 임베딩
         return self.classifier(pooled_output)
 
 # 감성 추론 함수
@@ -38,7 +41,7 @@ def predict_sentiment(text, model, tokenizer, max_len=128):
     Returns:
         tuple: (예측 클래스, spam 확률, ham 확률)
     """
-    model.eval()
+    model.eval()  # 평가 모드
     with torch.no_grad():
         # 입력 텍스트 토큰화
         inputs = tokenizer(
@@ -48,12 +51,21 @@ def predict_sentiment(text, model, tokenizer, max_len=128):
             padding="max_length",
             max_length=max_len
         )
-        input_ids = inputs['input_ids']
-        attention_mask = inputs['attention_mask']
-        token_type_ids = inputs.get('token_type_ids', torch.zeros_like(input_ids))
+
+        # 모든 텐서를 동일한 디바이스로 이동
+        input_ids = inputs['input_ids'].to(device)
+        attention_mask = inputs['attention_mask'].to(device)
+
+        # `token_type_ids`가 없는 경우 기본값 생성 후 디바이스 이동
+        if 'token_type_ids' in inputs:
+            token_type_ids = inputs['token_type_ids'].to(device)
+        else:
+            token_type_ids = torch.zeros_like(input_ids).to(device)
 
         # 모델 추론
         logits = model(input_ids, attention_mask, token_type_ids)
+
+        # 확률 계산
         probs = F.softmax(logits, dim=1)  # 소프트맥스를 사용해 확률 계산
         spam_prob, ham_prob = probs[0][1].item(), probs[0][0].item()  # spam: 1, ham: 0
 
@@ -64,13 +76,17 @@ def predict_sentiment(text, model, tokenizer, max_len=128):
 
 # 메인 함수
 if __name__ == "__main__":
+    # GPU/CPU 설정
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     # 모델 및 토크나이저 로드
     tokenizer = BertTokenizer.from_pretrained("monologg/kobert")
     bert_model = BertModel.from_pretrained("monologg/kobert")
-    model = BERTClassifier(bert_model, num_classes=2, dr_rate=0.5)
+    model = BERTClassifier(bert_model).to(device)
 
     # 학습된 모델 가중치 로드
-    model.load_state_dict(torch.load("/home/maroco/dataset/model/sentiment_model.pt", map_location=torch.device('cpu')))
+    model_path = "/home/maroco/dataset/model/sentiment_model.pt"  # 모델 가중치 파일 경로 수정
+    model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
 
     # 테스트 입력
