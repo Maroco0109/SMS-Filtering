@@ -2,7 +2,7 @@
 .cache/
 
 # __pycache__ 폴더 무시
-.__pycache__/
+__pycache__/
 
 # .csv 데이터셋 무시
 *.csv
