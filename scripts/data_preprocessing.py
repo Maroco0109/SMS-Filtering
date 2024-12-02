@@ -1,5 +1,16 @@
 import pandas as pd
 import re
+import json
+
+def main():
+    # 설정 파일 읽기
+    with open("/json/config.json","r") as f:
+        config = json.load(f)
+
+    # 각 전처리 함수 호출
+    preprocess_ham(config["ham_csv"]["input_dir"], config["ham_csv"]["output_file"])
+    preprocess_ham_xlsx(config["ham_xlsx"]["input_dir"], config["ham_xlsx"]["output_file"])
+    preprocess_spam(config["spam"]["input_dir"], config["spam"]["output_file"])
 
 # 텍스트 처리 함수 설정
 def preprocess_text(text):
@@ -96,7 +107,9 @@ def preprocess_ham_xlsx(file_paths, output_path):
     # 저장
     df.to_csv(output_path, index=False)
 
-
+# 메인 함수 설정
+if __name__ == "__main__":
+    main()
 
 # def preprocess_and_label(file_paths, output_path, label):
 #     """
