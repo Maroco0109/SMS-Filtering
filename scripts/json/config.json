@@ -10,5 +10,20 @@
     "spam": {
         "input_dir": "/home/maroco/SMS-Filtering/data/raw/spam/csv",
         "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/spam_data.csv"
+    },
+    "sms-data":{
+        "input_dir": "/home/maroco/SMS-Filtering/data/preprocessed/*.csv",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/sms_data.csv"
+    },
+    "train" :{
+        "input_dir": "/home/maroco/SMS-Filtering/data/preprocessed/sms_data.csv",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/train.csv"
+    },
+    "test" :{
+        "input_dir": "/home/maroco/SMS-Filtering/data/preprocessed/sms_data.csv",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/test.csv"
+    },
+    "model" :{
+        "output_file": "/home/maroco/SMS-Filtering/model"
     }
 }
