@@ -1,0 +1,14 @@
+{
+    "ham_csv": {
+        "input_dir": "/home/maroco/SMS-Filtering/data/raw/ham/csv",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/ham_data.csv"
+    },
+    "ham_xlsx": {
+        "input_dir": "/home/maroco/SMS-Filtering/data/raw/ham/xlsx",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/ham_data_xlsx.csv"
+    },
+    "spam": {
+        "input_dir": "/home/maroco/SMS-Filtering/data/raw/spam/csv",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/spam_data.csv"
+    }
+}
