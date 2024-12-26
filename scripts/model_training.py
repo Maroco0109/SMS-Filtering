@@ -6,7 +6,7 @@ import torch.optim.lr_scheduler as lr_scheduler
 import json
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
-from transformers import AdamW, BertTokenizer, BertModel, get_scheduler
+from transformers import AdamW, get_scheduler
 from transformers.optimization import get_cosine_schedule_with_warmup
 from tqdm.notebook import tqdm
 from kobert_tokenizer import KoBERTTokenizer
@@ -14,46 +14,10 @@ from sklearn.metrics import classification_report, precision_score, recall_score
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.class_weight import compute_class_weight
 from scripts.KoBERTDataset import KoBERTDataset
-from scripts.model import BERTClassifier
+from scripts.model import BERTClassifier, tokenizers_models
 from scripts.utils import FocalLoss, calc_accuracy
-
-
-def prepare_data_loaders():
-    # GPU 사용 설정
-    device = torch.device("cuda:0")
-
-    # 디렉토리 읽기
-    with open("/json/config.json","r") as f:
-        config = json.load(f)
-
-    # 파일 로드
-    train_df = pd.read_csv(config(["train"]["input_dir"]))
-    test_df = pd.read_csv(config(["test"]["input_dir"]))
-
-    train_texts = train_df['text'].tolist()  # 텍스트 열에서 리스트로 변환
-    train_labels = train_df['label'].tolist()  # 레이블 열에서 리스트로 변환
-
-    test_texts = test_df['text'].tolist()
-    test_labels = test_df['label'].tolist()
-
-    # Load tokenizer and model
-    tokenizer = BertTokenizer.from_pretrained("monologg/kobert")
-    bert_model = BertModel.from_pretrained("monologg/kobert")
-    model = BERTClassifier(bert_model).to(device)
-
-    # 레이블 인코딩 ('ham'과 'spam'을 각각 0과 1로 변환)
-    label_encoder = LabelEncoder()
-    train_df['label'] = label_encoder.fit_transform(train_df['label'])  # 'ham' → 0, 'spam' → 1
-    test_df['label'] = label_encoder.transform(test_df['label'])
-
-    # 데이터셋 및 DataLoader 준비
-    train_dataset = KoBERTDataset(train_texts, train_labels, tokenizer, max_len=128)
-    test_dataset = KoBERTDataset(test_texts, test_labels, tokenizer, max_len=128)
-
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=4)
-    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=4)
-
-    return train_loader, test_loader
+from scripts.config import Config
+from scripts.data_loader import prepare_data_loaders
 
 def main():
     ##GPU 사용 시
@@ -67,50 +31,9 @@ def main():
     train_df = pd.read_csv(config(["train"]["input_dir"]))
     test_df = pd.read_csv(config(["test"]["input_dir"]))
 
-    # Hyperparameters
-    max_len = 128
-    batch_size = 64
-    learning_rate = 1e-5
-    num_epochs = 3
-
     prepare_data_loaders()
 
-    # Load tokenizer and model
-    tokenizer = BertTokenizer.from_pretrained("monologg/kobert")
-    bert_model = BertModel.from_pretrained("monologg/kobert")
-    model = BERTClassifier(bert_model).to(device)
-
-    # 레이블 인코딩 ('ham'과 'spam'을 각각 0과 1로 변환)
-    label_encoder = LabelEncoder()
-    train_df['label'] = label_encoder.fit_transform(train_df['label'])  # 'ham' → 0, 'spam' → 1
-    test_df['label'] = label_encoder.transform(test_df['label'])
-
-    # Dataset 생성
-    train_texts = train_df['text'].tolist()  # 텍스트 열에서 리스트로 변환
-    train_labels = train_df['label'].tolist()  # 레이블 열에서 리스트로 변환
-    
-    test_texts = test_df['text'].tolist()
-    test_labels = test_df['label'].tolist()
-
-    train_dataset = KoBERTDataset(
-        texts=train_texts,
-        labels=train_labels,
-        tokenizer=tokenizer,
-        max_len=max_len
-    )
-
-    test_dataset = KoBERTDataset(
-        texts=test_texts,
-        labels=test_labels,
-        tokenizer=tokenizer,
-        max_len=max_len
-    )
-
-    # DataLoader 생성
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
-
-    train_loader, test_loader = prepare_data_loaders()
+    train_loader, test_loader, train_dataset, test_dataset, train_labels, test_labels = prepare_data_loaders()
     
     # 클래스 가중치 계산
     classes = np.unique(train_labels)  # [0, 1]을 numpy 배열로 변환
@@ -121,16 +44,16 @@ def main():
     loss_fn = FocalLoss(alpha=2.0, gamma=2.0)
 
     # 옵티마이저 설정
-    optimizer = AdamW(model.parameters(), lr=learning_rate)
+    optimizer = AdamW(tokenizers_models.model.parameters(), lr=Config.LEARNING_RATE)
 
     # 스케쥴러 설정
     steps_per_epoch = len(train_loader)
-    total_steps = steps_per_epoch * num_epochs  # 전체 학습 스텝 수
+    total_steps = steps_per_epoch * Config.NUM_EPOCHS  # 전체 학습 스텝 수
     scheduler = get_scheduler("linear", optimizer=optimizer, num_warmup_steps=0, num_training_steps=total_steps)
 
     # 훈련 및 검증
-    for epoch in range(num_epochs):
-        model.train()
+    for epoch in range(Config.NUM_EPOCHS):
+        tokenizers_models.model.train()
         total_acc, total_loss = 0, 0
 
         # Training phase
@@ -144,7 +67,7 @@ def main():
             labels = batch[3].to(device)
 
             # Forward pass
-            outputs = model(input_ids, attention_mask, token_type_ids)
+            outputs = tokenizers_models.model(input_ids, attention_mask, token_type_ids)
             loss = loss_fn(outputs, labels)
 
             loss.backward()
@@ -157,7 +80,7 @@ def main():
         print(f"Epoch {epoch+1} | Train Loss: {total_loss / len(train_loader):.4f} | Train Accuracy: {total_acc / len(train_dataset):.4f}")
 
         # Validation phase
-        model.eval()
+        tokenizers_models.model.eval()
         total_acc, total_loss = 0, 0
         with torch.no_grad():
             for batch in test_loader:
@@ -168,7 +91,7 @@ def main():
                 labels = batch[3].to(device)
 
                 # Forward pass
-                outputs = model(input_ids, attention_mask, token_type_ids)
+                outputs = tokenizers_models.model(input_ids, attention_mask, token_type_ids)
                 loss = loss_fn(outputs, labels)
 
                 total_loss += loss.item()
@@ -185,7 +108,7 @@ def main():
             texts = [str(t) for t in texts]
 
         # Tokenizer conversion
-        inputs = tokenizer(
+        inputs = tokenizers_models.tokenizer(
             texts,
             return_tensors="pt",
             truncation=True,
@@ -198,13 +121,13 @@ def main():
         labels = labels.to(device)
 
         # Model prediction
-        outputs = model(**inputs)
+        outputs = tokenizers_models.model(**inputs)
         print("Logits:", outputs)
 
     # 모델 저장
     output_dir = config(["model"]["output_file"])
-    model.save_pretrained(output_dir)
-    tokenizer.save_pretrained(output_dir)
+    tokenizers_models.model.save_pretrained(output_dir)
+    tokenizers_models.tokenizer.save_pretrained(output_dir)
 
     print(f"Model and tokenizer saved in {output_dir}")
 

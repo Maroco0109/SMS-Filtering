@@ -2,10 +2,10 @@ import torch
 import json
 import pandas as pd
 from torch.utils.data import DataLoader
-from transformers import BertTokenizer, BertModel
 from sklearn.preprocessing import LabelEncoder
-from scripts.model import BERTClassifier
+from scripts.model import tokenizers_models
 from scripts.KoBERTDataset import KoBERTDataset
+from scripts.config import Config
 
 # Data loaders
 def prepare_data_loaders():
@@ -26,21 +26,16 @@ def prepare_data_loaders():
     test_texts = test_df['text'].tolist()
     test_labels = test_df['label'].tolist()
 
-    # Load tokenizer and model
-    tokenizer = BertTokenizer.from_pretrained("monologg/kobert")
-    bert_model = BertModel.from_pretrained("monologg/kobert")
-    model = BERTClassifier(bert_model).to(device)
-
     # 레이블 인코딩 ('ham'과 'spam'을 각각 0과 1로 변환)
     label_encoder = LabelEncoder()
     train_df['label'] = label_encoder.fit_transform(train_df['label'])  # 'ham' → 0, 'spam' → 1
     test_df['label'] = label_encoder.transform(test_df['label'])
 
     # 데이터셋 및 DataLoader 준비
-    train_dataset = KoBERTDataset(train_texts, train_labels, tokenizer, max_len=128)
-    test_dataset = KoBERTDataset(test_texts, test_labels, tokenizer, max_len=128)
+    train_dataset = KoBERTDataset(train_texts, train_labels, tokenizers_models.tokenizer, max_len=Config.MAX_LEN)
+    test_dataset = KoBERTDataset(test_texts, test_labels, tokenizers_models.tokenizer, max_len=Config.MAX_LEN)
 
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=4)
-    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=Config.BATCH_SIZE, shuffle=True, num_workers=4)
+    test_loader = DataLoader(test_dataset, batch_size=Config.BATCH_SIZE, shuffle=False, num_workers=4)
 
-    return train_loader, test_loader
+    return train_loader, test_loader, train_dataset, test_dataset, train_labels, test_labels

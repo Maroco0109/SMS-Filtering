@@ -1,6 +1,9 @@
 import torch
+from transformers import BertTokenizer, BertModel
 from torch import nn
 
+##GPU 사용 시
+device = torch.device("cuda:0")
 # 모델 정의
 class BERTClassifier(nn.Module):
     def __init__(self, bert):
@@ -24,3 +27,9 @@ class BERTClassifier(nn.Module):
         )
         pooled_output = outputs.pooler_output  # [CLS] 토큰의 임베딩
         return self.classifier(pooled_output)
+
+class tokenizers_models():
+    # Load tokenizer and model
+    tokenizer = BertTokenizer.from_pretrained("monologg/kobert")
+    bert_model = BertModel.from_pretrained("monologg/kobert")
+    model = BERTClassifier(bert_model).to(device)
