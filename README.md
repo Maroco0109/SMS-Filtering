@@ -16,13 +16,7 @@
       - CUDA
       - CuDNN
   - Python
-    - ver 3.7.11
-    - packages
-      - Tensorflow
-        - Keras
-      - KoBERT
-      - YOLO
-      - OCR API(Naver Clova, Google Cloud Vision)
+    - Pytorch
 - Project architecture
   - ![SMS Filtering](https://github.com/user-attachments/assets/511bd687-edcf-4e68-bd1f-88dc86e59242)
 
@@ -42,16 +36,16 @@ Spam SMS Filtering/
 │ └── ham_xlsx.ipynb
 ├── scripts/ # 주요 기능을 담당하는 Python 모듈
 │ ├── init.py # 패키지 초기화 파일
+│ ├── config.py # 하이퍼파라미터 및 매개변수
+│ ├── data_loader.py # 데이터셋을 데이터 로더 형태로 변환
 │ ├── data_split.py # 데이터셋 분할 관련 코드
 │ ├── data_preprocessing.py # 스팸/햄 데이터 전처리 관련 코드
 │ ├── merge_dataset.py # 데이터 병합 관련 코드
 │ ├── model_training.py # KoBERT 모델 학습 코드
+│ ├── model.py # BERT 모델 구현
+│ ├── sentiment_predict.py # 감성추론 구현
 │ ├── evaluation.py # 모델 평가 관련 코드
 │ └── utils.py # 공통 유틸리티 함수
-├── tests/ # 테스트 코드
-│ ├── test_data_preprocessing.py # 데이터 전처리 테스트
-│ ├── test_model_training.py # 모델 학습 테스트
-│ └── test_merge_dataset.py # 데이터 병합 테스트
 ├── requirements.txt # 필요한 Python 패키지 리스트
 ├── main.py # 전체 워크플로우를 실행하는 스크립트
 └── README.md # 프로젝트 설명
