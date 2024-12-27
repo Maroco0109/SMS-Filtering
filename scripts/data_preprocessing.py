@@ -11,6 +11,7 @@ def main():
     preprocess_ham(config["ham_csv"]["input_dir"], config["ham_csv"]["output_file"])
     preprocess_ham_xlsx(config["ham_xlsx"]["input_dir"], config["ham_xlsx"]["output_file"])
     preprocess_spam(config["spam"]["input_dir"], config["spam"]["output_file"])
+    preprocess_spam_xlsx(config["spam_xlsx"]["input_dir"], config["spam_xlsx"]["output_file"])
 
 # 텍스트 처리 함수 설정
 def preprocess_text(text):
@@ -92,7 +93,33 @@ def preprocess_ham_xlsx(file_paths, output_path):
     df = df.dropna()
     # 컬럼명 추가
     df['label'] = 'ham'
-    # 컬럼명 변경 - 특정 데이터셋
+    ### 컬럼명 변경 - 특정 데이터셋 ###
+    df = df.rename(columns={'SENTENCE': 'text'})
+    # 불용 컬럼 제거
+    df = df.loc[:, df.columns.intersection(['text','label'])]
+    # 데이터 전처리
+    df['text'] = df['text'].apply(preprocess_text)
+    df.to_csv(output_path, index=False)
+    # 결측치 및 중복값 제거
+    drop_index = df[df['text'].isnull()].index
+    df = df.drop(drop_index)
+    df = df.drop_duplicates('text')
+    
+    # 저장
+    df.to_csv(output_path, index=False)
+
+def preprocess_spam_xlsx(file_paths, output_path):
+    """
+    spam 데이터셋 전처리 함수
+    """
+    # ham 파일 읽기
+    dfs = [pd.read_excel(file, engine='openpyxl') for file in file_paths]
+    df = pd.concat(dfs, ignore_index=True)
+    # NaN값 제거
+    df = df.dropna()
+    # 컬럼명 추가
+    df['label'] = 'spam'
+    ### 컬럼명 변경 - 특정 데이터셋 ###
     df = df.rename(columns={'SENTENCE': 'text'})
     # 불용 컬럼 제거
     df = df.loc[:, df.columns.intersection(['text','label'])]

@@ -11,6 +11,10 @@
         "input_dir": "/home/maroco/SMS-Filtering/data/raw/spam/csv",
         "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/spam_data.csv"
     },
+    "spam_xlsx": {
+        "input_dir": "/home/maroco/SMS-Filtering/data/raw/spam/xlsx",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/spam_data_xlsx.csv"
+    },
     "sms-data":{
         "input_dir": "/home/maroco/SMS-Filtering/data/preprocessed/*.csv",
         "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/sms_data.csv"
