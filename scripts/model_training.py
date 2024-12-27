@@ -1,20 +1,10 @@
 import torch
 import pandas as pd
 import numpy as np
-import torch.optim as optim
-import torch.optim.lr_scheduler as lr_scheduler
 import json
-from torch import nn
-from torch.utils.data import DataLoader, Dataset
 from transformers import AdamW, get_scheduler
-from transformers.optimization import get_cosine_schedule_with_warmup
-from tqdm.notebook import tqdm
-from kobert_tokenizer import KoBERTTokenizer
-from sklearn.metrics import classification_report, precision_score, recall_score, f1_score
-from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.class_weight import compute_class_weight
-from scripts.KoBERTDataset import KoBERTDataset
-from scripts.model import BERTClassifier, tokenizers_models
+from scripts.model import tokenizers_models
 from scripts.utils import FocalLoss, calc_accuracy
 from scripts.config import Config
 from scripts.data_loader import prepare_data_loaders
