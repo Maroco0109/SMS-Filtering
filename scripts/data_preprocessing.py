@@ -21,15 +21,12 @@ def preprocess_text(text):
     text = text.strip()
     # 맨 앞의 숫자와 공백 또는 콜론 제거
     text = re.sub(r'^\d+\s*', '', text)
-    # 필요에 따라 특수 문자 제거 (예시로 일부 문자만 제거)
+    # 특수 문자 제거
     # text = re.sub(r'[^가-힣a-zA-Z0-9\s]', '', text)
     text = re.sub(r"[^\w\s@#%!?]", "", text)  # Retain @, #, %, !, ?
-    # 필요에 따라 특수 문자 제거 (예시로 일부 문자만 제거)
     text = re.sub(r'ifg@', '', text)
     # URL 마스킹
     text = re.sub(r"http\S+|www\S+", "<URL>", text)
-    # *이 두개 이상 발생할 시 삭제
-    text = re.sub(r"\*{2,}","", text)
     
     return text
 
