@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 import json
+from scripts.config import Label
 
 def main():
     # 설정 파일 읽기
@@ -30,6 +31,14 @@ def preprocess_text(text):
     
     return text
 
+# 레이블링 함수
+def label_text(text):
+    for label, keywords in Label.labels.items():
+        if any(keyword in text for keyword in keywords):
+            return label
+    return "기타"
+
+# csv 파일 전처리 함수
 def preprocess_spam(file_paths, output_path):
     """
     spam 데이터셋 전처리 함수
@@ -42,7 +51,9 @@ def preprocess_spam(file_paths, output_path):
     # 컬럼명 추가
     df.columns=['label', 'text']
     df = df.set_index('label')
-    df['label'] = 'spam'
+    # 스팸 레이블 설정
+    # df['label'] = 'spam'
+    df['label'] = df['text'].apply(label_text)
     # 불용 컬럼 제거
     df = df.loc[:, df.columns.intersection(['text','label'])]
     # 데이터 전처리
@@ -79,6 +90,7 @@ def preprocess_ham(file_paths, output_path):
     # 저장
     df.to_csv(output_path, index=False)
 
+# xlsx 파일 전처리 함수
 def preprocess_ham_xlsx(file_paths, output_path):
     """
     ham 데이터셋 전처리 함수
@@ -109,7 +121,7 @@ def preprocess_spam_xlsx(file_paths, output_path):
     """
     spam 데이터셋 전처리 함수
     """
-    # ham 파일 읽기
+    # spam 파일 읽기
     dfs = [pd.read_excel(file, engine='openpyxl') for file in file_paths]
     df = pd.concat(dfs, ignore_index=True)
     # NaN값 제거
@@ -123,6 +135,9 @@ def preprocess_spam_xlsx(file_paths, output_path):
     # 데이터 전처리
     df['text'] = df['text'].apply(preprocess_text)
     df.to_csv(output_path, index=False)
+    # 스팸 레이블 설정
+    # df['label'] = 'spam'
+    df['label'] = df['text'].apply(label_text)
     # 결측치 및 중복값 제거
     drop_index = df[df['text'].isnull()].index
     df = df.drop(drop_index)
