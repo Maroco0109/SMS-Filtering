@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from transformers import BertTokenizer, BertForSequenceClassification
 from torch.utils.data import DataLoader
-from scripts.KoBERTDataset import KoBERTDataset  # Assuming the dataset class is here
+from KoBERTDataset import KoBERTDataset  # Assuming the dataset class is here
 from sklearn.metrics import classification_report, precision_score, recall_score, f1_score
 
 def load_model_and_tokenizer(model_path):

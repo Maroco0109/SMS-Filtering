@@ -2,7 +2,7 @@ import torch
 from transformers import BertTokenizer, BertModel
 from torch import nn
 import torch.nn.functional as F
-from scripts.model import BERTClassifier
+from model import BERTClassifier
 
 # 감성 추론 함수
 def predict_sentiment(text, model, tokenizer, max_len=128):
