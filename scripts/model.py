@@ -1,5 +1,7 @@
 import torch
-from transformers import BertTokenizer, BertModel
+from kobert.pytorch_kobert import get_pytorch_kobert_model
+from kobert.utils import get_tokenizer
+from transformers import AutoTokenizer
 from torch import nn
 
 ##GPU 사용 시
@@ -23,13 +25,27 @@ class BERTClassifier(nn.Module):
         outputs = self.bert(
             input_ids=input_ids,
             attention_mask=attention_mask,
-            token_type_ids=token_type_ids
+            token_type_ids=token_type_ids,
+            return_dict=False
         )
-        pooled_output = outputs.pooler_output  # [CLS] 토큰의 임베딩
+        pooled_output = outputs[1]  # [CLS] 토큰의 임베딩
         return self.classifier(pooled_output)
 
-class tokenizers_models():
-    # Load tokenizer and model
-    tokenizer = BertTokenizer.from_pretrained("monologg/kobert")
-    bert_model = BertModel.from_pretrained("monologg/kobert")
-    model = BERTClassifier(bert_model).to(device)
+class tokenizers_models:
+    def __init__(self):
+        print("KoBERT 모델 및 토크나이저 로드 중...")
+        
+        # KoBERT 토크나이저 로드
+        self.tokenizer_path = get_tokenizer()
+        self.tokenizer = AutoTokenizer.from_pretrained("skt/kobert-base-v1")
+        
+        # KoBERT 모델 로드
+        self.bert_model, self.vocab = get_pytorch_kobert_model()
+        
+        # BERT Classifier 초기화 
+        self.model = BERTClassifier(self.bert_model).to(device)
+        
+        print("KoBERT 모델 및 토크나이저 로드 완료!")
+        
+# 클래스 인스턴스 생성 (전역으로 사용 가능)
+tokenizer_model = tokenizers_models()
