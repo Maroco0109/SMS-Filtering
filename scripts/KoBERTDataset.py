@@ -14,7 +14,7 @@ class KoBERTDataset(Dataset):
 
     def __getitem__(self, idx):
         text = self.texts[idx]
-        label = self.labels[idx]
+        label = int(self.labels[idx])
 
         # Tokenization
         inputs = self.tokenizer(
@@ -28,5 +28,8 @@ class KoBERTDataset(Dataset):
         input_ids = inputs['input_ids'].squeeze(0)
         attention_mask = inputs['attention_mask'].squeeze(0)
         token_type_ids = inputs['token_type_ids'].squeeze(0)
+        
+        # token_type_ids 강제로 수정
+        token_type_ids = torch.zeros_like(input_ids)
 
         return input_ids, attention_mask, token_type_ids, torch.tensor(label, dtype=torch.long)
