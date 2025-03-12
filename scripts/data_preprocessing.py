@@ -4,6 +4,7 @@ import json
 import os
 import glob
 from config import Label
+from sklearn.model_selection import train_test_split
 
 def main():
     # 현재 스크립트 위치 기준으로 config.json 경로 설정
@@ -18,9 +19,23 @@ def main():
     ham_csv_files = glob.glob(config["ham_csv"]["input_dir"])
     # spam csv 호출
     spam_csv_files = glob.glob(config["spam"]["input_dir"])
-    # 각 전처리 함수 호출
+
+    # 데이터셋 전처리
     preprocess_ham(ham_csv_files, config["ham_csv"]["output_file"])
     preprocess_spam(spam_csv_files, config["spam"]["output_file"])
+
+    # 데이터셋 병합
+    input_path_pattern = config["sms-data"]["input_dir"]
+    output_path = config["sms-data"]["output_file"]
+    
+    merge_datasets(input_path_pattern=input_path_pattern, output_path=output_path)
+
+    # 데이터 분할
+    data_path = config["sms-data"]["output_file"]
+    output_train = config["train"]["output_file"]
+    output_test = config["test"]["output_file"]
+    
+    split_dataset(data_path, output_train, output_test)
     
 
 # 텍스트 처리 함수 설정
@@ -161,6 +176,36 @@ def preprocess_spam_xlsx(file_paths, output_path):
     
     # 저장
     df.to_csv(output_path, index=False)
+
+# 데이터셋 분할
+def split_dataset(data_path, output_train, output_test, test_size=0.2, random_state=0):
+    data = pd.read_csv(data_path)
+    
+    X = data['text']
+    y = data['label']
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state, stratify=y)
+    
+    train_set = pd.concat([X_train, y_train], axis=1)
+    test_set = pd.concat([X_test, y_test], axis=1)
+    
+    # 출력 디렉토리 자동 생성
+    os.makedirs(os.path.dirname(output_train), exist_ok=True)
+    os.makedirs(os.path.dirname(output_test), exist_ok=True)
+    
+    # 파일 저장
+    train_set.to_csv(output_train, index=False)
+    test_set.to_csv(output_test, index=False)
+
+# 데이터셋 병합
+def merge_datasets(input_path_pattern, output_path):
+    files = glob.glob(input_path_pattern)
+    combined = pd.concat([pd.read_csv(file) for file in files], ignore_index=True)
+    combined.drop_duplicates(subset=['text'], inplace=True)
+    combined.dropna(subset=["text"], inplace=True)    # NaN값 제거
+    combined["text"]=combined["text"].astype(str)   # text 값을 str로 강제 변환
+    
+    combined.to_csv(output_path, index=False)
 
 # 메인 함수 설정
 if __name__ == "__main__":
