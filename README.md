@@ -128,3 +128,145 @@ python scripts/evaluation.py
 ```bash
 pip install -r requirements.txt
 ```
+
+Phase 1: Model Conversion and Optimization
+1. Convert PyTorch Model to Mobile Format
+   - Convert the KoBERT model to TorchScript format
+   - Optimize the model size using quantization
+   - Export the model in a format compatible with PyTorch Mobile
+
+2. Prepare Model Assets
+   - Export the tokenizer vocabulary and configurations
+   - Create a lightweight version of the model suitable for mobile devices
+   - Package model files and assets for Android integration
+
+Phase 2: Android App Development
+1. Project Setup
+   - Create a new Android project in Android Studio
+   - Set up the required dependencies:
+     ```gradle
+     dependencies {
+         implementation 'org.pytorch:pytorch_android:1.13.0'
+         implementation 'org.pytorch:pytorch_android_torchvision:1.13.0'
+         // Add other necessary dependencies
+     }
+     ```
+
+2. App Architecture
+   ```
+   app/
+   ├── java/
+   │   ├── activities/
+   │   │   ├── MainActivity.java
+   │   │   └── ResultActivity.java
+   │   ├── model/
+   │   │   ├── SpamPredictor.java
+   │   │   └── KoBertTokenizer.java
+   │   └── utils/
+   │       └── TextPreprocessor.java
+   ├── assets/
+   │   ├── spam_model.pt
+   │   └── vocab.txt
+   └── res/
+       └── layout/
+           ├── activity_main.xml
+           └── activity_result.xml
+   ```
+
+3. Core Features Implementation
+   - Create text input interface
+   - Implement real-time SMS monitoring (optional)
+   - Build prediction result display
+   - Add message history feature
+
+Phase 3: Model Integration
+1. Port the Prediction Logic
+```java
+public class SpamPredictor {
+    private Module model;
+    private KoBertTokenizer tokenizer;
+
+    public SpamPredictor(Context context) {
+        // Load the model
+        model = Module.load(assetFilePath(context, "spam_model.pt"));
+        tokenizer = new KoBertTokenizer(context);
+    }
+
+    public PredictionResult predict(String text) {
+        // Tokenize and predict
+        // Return spam probability and classification
+    }
+}
+```
+
+2. Implement Tokenizer
+```java
+public class KoBertTokenizer {
+    // Port the Python tokenizer logic to Java
+    // Implement necessary preprocessing
+    public IValue tokenize(String text) {
+        // Convert text to model input format
+    }
+}
+```
+
+Phase 4: User Interface Development
+1. Main Screen
+   - Text input field
+   - "Check Message" button
+   - History of recent checks
+   - Settings button
+
+2. Result Screen
+   - Classification result (Spam/Ham)
+   - Confidence score
+   - Detailed analysis
+   - Action buttons (Report false positive/negative)
+
+Phase 5: Additional Features
+1. Real-time SMS Monitoring
+   - Background service for SMS monitoring
+   - Notification system for spam detection
+   - Auto-categorization of messages
+
+2. Settings and Customization
+   - Sensitivity adjustment
+   - Notification preferences
+   - Language settings
+   - Theme options
+
+Phase 6: Testing and Optimization
+1. Performance Testing
+   - Model inference speed
+   - Memory usage
+   - Battery consumption
+
+2. Accuracy Testing
+   - Test with various message types
+   - Validate Korean language handling
+   - Check edge cases
+
+Phase 7: Deployment and Maintenance
+1. Release Preparation
+   - App optimization
+   - Documentation
+   - Privacy policy
+   - Play Store listing preparation
+
+2. Post-Release
+   - Monitor performance
+   - Gather user feedback
+   - Plan updates and improvements
+
+Timeline Estimation:
+- Phase 1: 1-2 weeks
+- Phase 2: 1 week
+- Phase 3: 2 weeks
+- Phase 4: 1 week
+- Phase 5: 2 weeks
+- Phase 6: 1 week
+- Phase 7: 1 week
+
+Total estimated time: 9-10 weeks
+
+Would you like me to help you get started with any specific phase or provide more detailed information about any particular aspect of the plan?
