@@ -6,6 +6,7 @@ from torch import nn
 
 ##GPU 사용 시
 device = torch.device("cuda:0")
+
 # 모델 정의
 class BERTClassifier(nn.Module):
     def __init__(self, bert):
@@ -22,6 +23,7 @@ class BERTClassifier(nn.Module):
         )
 
     def forward(self, input_ids, attention_mask, token_type_ids):
+        # TorchScript compatibility: explicitly specify return_dict=False
         outputs = self.bert(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -30,6 +32,11 @@ class BERTClassifier(nn.Module):
         )
         pooled_output = outputs[1]  # [CLS] 토큰의 임베딩
         return self.classifier(pooled_output)
+
+    @torch.jit.export
+    def get_embedding_dim(self):
+        """Export this method for TorchScript"""
+        return self.bert.config.hidden_size
 
 class tokenizers_models:
     def __init__(self):
