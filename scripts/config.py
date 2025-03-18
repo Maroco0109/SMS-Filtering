@@ -3,9 +3,13 @@
 # Hyperparameters
 class Config:
     MAX_LEN = 128
-    BATCH_SIZE = 64
-    LEARNING_RATE = 1e-5
-    NUM_EPOCHS = 3
+    BATCH_SIZE = 32
+    LEARNING_RATE = 2e-5
+    NUM_EPOCHS = 5
+    WARMUP_RATIO = 0.1
+    WEIGHT_DECAY = 0.01
+    EARLY_STOPPING_PATIENCE = 3
+    VALIDATION_SPLIT = 0.1
 
 # Label
 class Label:

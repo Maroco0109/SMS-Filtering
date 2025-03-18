@@ -11,26 +11,30 @@ device = torch.device("cuda:0")
 class BERTClassifier(nn.Module):
     def __init__(self, bert):
         super(BERTClassifier, self).__init__()
-        self.bert = bert  # Pre-trained BERT 모델
+        self.bert = bert
+        
+        # Freeze some of the BERT layers to prevent overfitting
+        for param in list(bert.parameters())[:-2]:  # Freeze all except last 2 layers
+            param.requires_grad = False
+            
+        self.dropout = nn.Dropout(0.5)  # Increased dropout
         self.classifier = nn.Sequential(
-            nn.Linear(bert.config.hidden_size, 256),
+            nn.Linear(bert.config.hidden_size, 64),
+            nn.LayerNorm(64),  # Add layer normalization
             nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(128, 2)  # 이진 분류
+            nn.Dropout(0.5),
+            nn.Linear(64, 2)
         )
 
     def forward(self, input_ids, attention_mask, token_type_ids):
-        # TorchScript compatibility: explicitly specify return_dict=False
         outputs = self.bert(
             input_ids=input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
             return_dict=False
         )
-        pooled_output = outputs[1]  # [CLS] 토큰의 임베딩
+        pooled_output = outputs[1]
+        pooled_output = self.dropout(pooled_output)
         return self.classifier(pooled_output)
 
     @torch.jit.export

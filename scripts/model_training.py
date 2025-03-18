@@ -10,141 +10,139 @@ from model import tokenizers_models
 from utils import FocalLoss, calc_accuracy
 from config import Config
 from data_loader import prepare_data_loaders
+from training_utils import EarlyStopping, MetricsTracker
 
 def main():
-    ##GPU 사용 시
-    device = torch.device("cuda:0")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
-    # 현재 스크립트 위치 기준으로 config.json 경로 설정
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(current_dir, "json/config.json")
 
-     # 설정 파일 읽기
-    with open(config_path,"r",encoding="utf-8") as f:
+    with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
 
-    # 파일 로드
-    train_files = glob.glob(config["train"]["input_dir"])
-    test_files = glob.glob(config["test"]["input_dir"])
+    # Data preparation
+    train_loader, val_loader, test_loader, train_dataset, val_dataset, test_dataset = prepare_data_loaders()
     
-    train_df = pd.concat([pd.read_csv(f) for f in train_files], ignore_index=True)
-    test_df = pd.concat([pd.read_csv(f) for f in test_files], ignore_index=True)
-
-    # 데이터 로더 준비
-    train_loader, test_loader, train_dataset, test_dataset, train_labels, test_labels = prepare_data_loaders()
-    
-    # 클래스 가중치 계산
-    classes = np.unique(train_labels)  # [0, 1]을 numpy 배열로 변환
-    class_weights = compute_class_weight(class_weight='balanced', classes=classes, y=train_labels)
-    class_weights_tensor = torch.tensor(class_weights, dtype=torch.float).to(device)
-    
-    # KoBERT 모델과 토크나이저 로드
+    # Model initialization
     tokenizer_model = tokenizers_models()
     model = tokenizer_model.model
     tokenizer = tokenizer_model.tokenizer
 
-    # 손실 함수 정의
-    loss_fn = FocalLoss(alpha=2.0, gamma=2.0)
+    # Loss function with class weights
+    class_weights = compute_class_weight(
+        class_weight='balanced',
+        classes=np.array([0, 1]),
+        y=train_dataset.labels
+    )
+    class_weights_tensor = torch.tensor(class_weights, dtype=torch.float).to(device)
+    loss_fn = FocalLoss(alpha=class_weights_tensor, gamma=2.0)
 
-    # 옵티마이저 설정
-    optimizer = AdamW(model.parameters(), lr=Config.LEARNING_RATE)
+    # Optimizer with weight decay
+    no_decay = ['bias', 'LayerNorm.weight']
+    optimizer_grouped_parameters = [
+        {
+            'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
+            'weight_decay': Config.WEIGHT_DECAY
+        },
+        {
+            'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
+            'weight_decay': 0.0
+        }
+    ]
+    optimizer = AdamW(optimizer_grouped_parameters, lr=Config.LEARNING_RATE)
 
-    # 스케쥴러 설정
-    steps_per_epoch = len(train_loader)
-    total_steps = steps_per_epoch * Config.NUM_EPOCHS  # 전체 학습 스텝 수
-    scheduler = get_scheduler("linear", optimizer=optimizer, num_warmup_steps=0, num_training_steps=total_steps)
+    # Learning rate scheduler
+    num_training_steps = len(train_loader) * Config.NUM_EPOCHS
+    num_warmup_steps = int(num_training_steps * Config.WARMUP_RATIO)
+    scheduler = get_scheduler(
+        "linear",
+        optimizer=optimizer,
+        num_warmup_steps=num_warmup_steps,
+        num_training_steps=num_training_steps
+    )
 
-    # 훈련 및 검증
+    # Early stopping and metrics tracking
+    early_stopping = EarlyStopping(
+        patience=Config.EARLY_STOPPING_PATIENCE,
+        path=os.path.join(config["model"]["output_file"], 'best_model.pt')
+    )
+    metrics_tracker = MetricsTracker()
+
+    # Training loop
     for epoch in range(Config.NUM_EPOCHS):
         model.train()
-        total_acc, total_loss = 0, 0
-        for batch in train_loader:
-            input_ids, attention_mask, token_type_ids, labels = batch
-            print(f"input_ids.shape: {input_ids.shape}")
-            print(f"attention_mask.shape: {attention_mask.shape}")
-            print(f"token_type_ids.shape: {token_type_ids.shape}")
-            print(f"labels.shape: {labels.shape}")
-            break
+        train_loss, train_acc = 0, 0
         
-        # Training phase
         for batch in train_loader:
             optimizer.zero_grad()
-
-            # Extract inputs and labels
+            
             input_ids = batch[0].to(device)
             attention_mask = batch[1].to(device)
             token_type_ids = batch[2].to(device)
             labels = batch[3].to(device)
 
-            # Forward pass
             outputs = model(input_ids, attention_mask, token_type_ids)
             loss = loss_fn(outputs, labels)
-
+            
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)  # Gradient clipping
+            
             optimizer.step()
             scheduler.step()
 
-            total_loss += loss.item()
-            total_acc += calc_accuracy(outputs, labels)
-
-        print(f"Epoch {epoch+1} | Train Loss: {total_loss / len(train_loader):.4f} | Train Accuracy: {total_acc / len(train_dataset):.4f}")
+            train_loss += loss.item()
+            train_acc += calc_accuracy(outputs, labels)
 
         # Validation phase
         model.eval()
-        total_acc, total_loss = 0, 0
+        val_loss, val_acc = 0, 0
+        
         with torch.no_grad():
-            for batch in test_loader:
-                # Extract inputs and labels
+            for batch in val_loader:
                 input_ids = batch[0].to(device)
                 attention_mask = batch[1].to(device)
                 token_type_ids = batch[2].to(device)
                 labels = batch[3].to(device)
 
-                # Forward pass
                 outputs = model(input_ids, attention_mask, token_type_ids)
                 loss = loss_fn(outputs, labels)
 
-                total_loss += loss.item()
-                total_acc += calc_accuracy(outputs, labels)
+                val_loss += loss.item()
+                val_acc += calc_accuracy(outputs, labels)
 
-        print(f"Epoch {epoch+1} | Val Loss: {total_loss / len(test_loader):.4f} | Val Accuracy: {total_acc / len(test_dataset):.4f}")
+        # Calculate average metrics
+        avg_train_loss = train_loss / len(train_loader)
+        avg_train_acc = train_acc / len(train_dataset)
+        avg_val_loss = val_loss / len(val_loader)
+        avg_val_acc = val_acc / len(val_dataset)
 
-    # Debugging logits
-    for batch in test_loader:
-        texts, labels = batch[0], batch[3]
+        metrics_tracker.update(avg_train_loss, avg_train_acc, avg_val_loss, avg_val_acc)
+        
+        print(f"Epoch {epoch+1}/{Config.NUM_EPOCHS}")
+        print(f"Train Loss: {avg_train_loss:.4f} | Train Acc: {avg_train_acc:.4f}")
+        print(f"Val Loss: {avg_val_loss:.4f} | Val Acc: {avg_val_acc:.4f}")
 
-        # Ensure texts is a list of strings
-        if isinstance(texts, torch.Tensor):
-            texts = [str(t) for t in texts]
+        # Early stopping check
+        early_stopping(avg_val_loss, model)
+        if early_stopping.early_stop:
+            print("Early stopping triggered")
+            break
 
-        # Tokenizer conversion
-        inputs = tokenizer(
-            texts,
-            return_tensors="pt",
-            truncation=True,
-            padding="max_length",
-            max_length=128
-        )
-
-        # Move inputs to GPU
-        inputs = {key: value.to(device) for key, value in inputs.items()}
-        labels = labels.to(device)
-
-        # Model prediction
-        outputs = model(**inputs)
-        print("Logits:", outputs)
-
-    # 모델 저장
+    # Load best model and save
+    model.load_state_dict(torch.load(early_stopping.path))
     output_dir = config["model"]["output_file"]
     os.makedirs(output_dir, exist_ok=True)
     
     model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
+    
+    # Print best metrics
+    best_metrics = metrics_tracker.get_best_metrics()
+    print("\nBest Model Metrics:")
+    print(f"Best Epoch: {best_metrics['best_epoch'] + 1}")
+    print(f"Best Validation Loss: {best_metrics['best_val_loss']:.4f}")
+    print(f"Best Validation Accuracy: {best_metrics['best_val_acc']:.4f}")
 
-    print(f"Model and tokenizer saved in {output_dir}")
-
-
-
-# 메인 함수 실행
 if __name__ == '__main__':
     main()
