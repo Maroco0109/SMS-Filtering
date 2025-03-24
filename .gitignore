@@ -10,4 +10,13 @@ __pycache__/
 # .xlsx 데이터셋 무시
 *.xlsx
 
+# log 폴더 무시
+lightning_logs/
+log/
+
+# img 폴더 무시
+img/
+
+# 모델 무시
+model_ckpt/
 # git remote test
