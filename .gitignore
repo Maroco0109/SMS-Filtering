@@ -10,6 +10,9 @@ __pycache__/
 # .xlsx 데이터셋 무시
 *.xlsx
 
+# .txt 데이터셋 무시
+*.txt
+
 # log 폴더 무시
 lightning_logs/
 log/
