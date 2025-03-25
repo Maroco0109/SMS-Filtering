@@ -108,9 +108,11 @@ class LightningPLM(LightningModule):
         )
 
     def training_step(self, batch, batch_idx):
+        threshold = 0.6
         input_ids, attention_mask, label = batch
         output = self(input_ids=input_ids, attention_mask=attention_mask, labels=label)
-        preds = self.softmax(output.logits).argmax(dim=-1)  # ✅ `argmax()` 추가
+        probs = self.softmax(output.logits)[:, 1]
+        preds = (probs >= threshold).long()
         self.log_dict({
             'train_loss' : output.loss,
             'train_acc' : self.accuracy(preds, label)
