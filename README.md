@@ -31,25 +31,6 @@ Spam SMS Filtering/
 ├── data/ # 원본 및 전처리 데이터 저장
 │ ├── raw/ # 원본 데이터
 │ └── preprocessed/ # 전처리된 데이터
-├── notebooks/ # 주피터 노트북 파일 저장(old)
-│ ├── KoBERT_Practice.ipynb
-│ ├── data_split.ipynb
-│ ├── dataset.ipynb
-│ ├── spam_preprocessing.ipynb
-│ ├── ham_preprocessing.ipynb
-│ └── ham_xlsx.ipynb
-├── scripts/ # 주요 기능을 담당하는 Python 모듈(old)
-│ ├── init.py # 패키지 초기화 파일
-│ ├── config.py # 하이퍼파라미터 및 매개변수
-│ ├── data_loader.py # 데이터셋을 데이터 로더 형태로 변환
-│ ├── data_split.py # 데이터셋 분할 관련 코드
-│ ├── data_preprocessing.py # 스팸/햄 데이터 전처리 관련 코드
-│ ├── merge_dataset.py # 데이터 병합 관련 코드
-│ ├── model_training.py # KoBERT 모델 학습 코드
-│ ├── model.py # BERT 모델 구현
-│ ├── sentiment_predict.py # 감성추론 구현
-│ ├── evaluation.py # 모델 평가 관련 코드
-│ └── utils.py # 공통 유틸리티 함수
 ├── preprocess/
 │ ├── build_dataset.py
 │ ├── preprocess.py
@@ -57,15 +38,16 @@ Spam SMS Filtering/
 │ └── util.py
 ├── utils/
 │ ├── __init__.py
+│ ├── config.py # 하이퍼파라미터 및 매개변수
 │ ├── data_util.py   # 데이터 토큰화
 │ ├── logger.py   # Log 파일 생성
 │ ├── model_util.py  # 한국어 LLM
+│ ├── data_preprocessing.py # 스팸/햄 데이터 전처리 관련 코드
 │ └── predict_text.py   # 감성 분석
 ├── main.py # 메인
 ├── plm.py  # 모델 호출 및 훈련
 ├── dataloader.py # 데이터로더
 ├── eval.py # 모델 평가
-├── commands.md   # preprocess, build, train 명령어
 ├── requirements.txt # 필요한 Python 패키지 리스트
 ├── main.py # 전체 워크플로우를 실행하는 스크립트
 └── README.md # 프로젝트 설명
@@ -77,34 +59,6 @@ Spam SMS Filtering/
 
 ---
 
-## 📁 Details
-
-### **1. Data**
-
-- **`data/raw/`**: 원본 데이터 파일이 저장되는 디렉토리입니다.
-- **`data/preprocessed/`**: 전처리된 데이터 파일이 저장되는 디렉토리입니다.
-
-### **2. Notebooks(old)**
-
-- 주피터 노트북 파일로 초기 분석 및 실험이 포함되어 있습니다:
-  - `KoBERT_Practice.ipynb`: KoBERT 모델 학습 및 평가 실험.
-  - `data_split.ipynb`: 데이터셋 분할 실험.
-  - `dataset.ipynb`: 데이터 병합 실험.
-  - `spam_preprocessing.ipynb`: 스팸 데이터 전처리 실험.
-  - `ham_preprocessing.ipynb`: 햄 데이터 전처리 실험.
-  - `ham_xlsx.ipynb`: Excel 형식의 햄 데이터 전처리 실험.
-
-### **3. Scripts(old)**
-
-- 주요 기능을 Python 모듈로 분리하여 재사용성을 높였습니다:
-  - **`data_split.py`**: 데이터셋을 `train`과 `test`로 분할합니다.
-  - **`data_preprocessing.py`**: 스팸 및 햄 데이터를 전처리합니다.
-  - **`merge_dataset.py`**: 여러 데이터 파일을 병합합니다.
-  - **`model_training.py`**: KoBERT 모델 학습.
-  - **`evaluation.py`**: 모델 평가.
-  - **`utils.py`**: 공통적으로 사용되는 유틸리티 함수들.
-
----
 
 ## 🚀 How to Run
 
