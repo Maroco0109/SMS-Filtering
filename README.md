@@ -82,28 +82,60 @@ python build_dataset.py --split --use_test --data_dir ../data --save_dir ../resu
 
 3. 모델 학습:
 
-# Electra
+### Electra
+
+- Cross Entrophy
 ```bash
 python main.py --train --data_dir result \
 --model_type electra --model_name electra+revised --max_len 64 --gpuid 0
 ```
 
-# Bert
+- Focal loss
+```bash
+python main.py --train --data_dir result \
+--model_type electra --model_name electra+revised --max_len 64 --gpuid 0 --use_focal_loss
+```
+
+### Bert
+
+- Cross Entrophy
 ```bash
 python main.py --train --data_dir result \
 --model_type bert --model_name bert+revised --max_len 64 --gpuid 0
 ```
 
-# Roberta
+- Focal loss
+```bash
+python main.py --train --data_dir result \
+--model_type bert --model_name bert+revised --max_len 64 --gpuid 0 --use_focal_loss
+```
+
+### Roberta
+
+- Cross Entrophy
 ```bash
 python main.py --train --data_dir result \
 --model_type roberta --model_name roberta+revised --max_len 64 --gpuid 0
 ```
 
-# Bigbird
+- Focal loss
+```bash
+python main.py --train --data_dir result \
+--model_type roberta --model_name roberta+revised --max_len 64 --gpuid 0 --use_focal_loss
+```
+
+### Bigbird
+
+- Cross Entrophy
 ```bash
 python main.py --train --data_dir result \
 --model_type bigbird --model_name bigbird+revised --max_len 64 --gpuid 0
+```
+
+- Focal loss
+```bash
+python main.py --train --data_dir result \
+--model_type bigbird --model_name bigbird+revised --max_len 64 --gpuid 0 --use_focal_loss
 ```
 
 4. 테스트:
