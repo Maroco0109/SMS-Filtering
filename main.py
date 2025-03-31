@@ -106,10 +106,11 @@ if __name__ == "__main__":
         
         # EarlyStopping 추가
         early_stopping = EarlyStopping(
-            monitor='avg_val_loss',
-            patience=1,
+            monitor='avg_val_f1',
+            min_delta=0.001,
+            patience=2,
             verbose=True,
-            mode='min'
+            mode='max'
         )
         
         trainer = Trainer(

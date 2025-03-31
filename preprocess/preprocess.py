@@ -44,6 +44,18 @@ def del_special_char(text : str):
     # return re.sub(r'[^\w\s]', '', text)  # ✅ 모든 특수문자 제거 (괄호 포함)
     return re.sub(r'[^가-힣a-zA-Z0-9\s]', '', text)
 
+# 불필요 접두어 제거
+def clean_sender_info(text):
+    text = re.sub(r'\[.*?\]', '', text)  # [Web발신], [광고] 제거
+    text = re.sub(r'\(광고\)', '', text)  # (광고) 제거
+    text = re.sub(r'ifg@|ak|qe|dcm', '', text)  # 발신자 흔적 제거
+    return text
+
+# 과도한 공백 정리
+def clean_whitespace(text):
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
 repeatchars_pattern = re.compile(r'(\D)\1{2,}')
 def repeat_normalize(text : str, num_repeats : int):
     if num_repeats > 0:
@@ -64,12 +76,9 @@ def del_url(text):
 def del_duplicated_space(text : str):
     return re.sub(r'[\s]+', ' ', text)
 
-# 민감 정보(이메일, 전화번호) 마스킹 함수
-def mask_sensitive_info(text: str):
-    # 이메일 주소를 <MASKED_EMAIL>로 치환
-    text = re.sub(r'\b[\w\.-]+@[\w\.-]+\.\w+\b', '<MASKED_EMAIL>', text)
-    # 전화번호(숫자 2~4자리-3~4자리-4자리 등)를 <MASKED_PHONE>로 치환
-    text = re.sub(r'\b\d{2,4}[-.\s]?\d{3,4}[-.\s]?\d{4}\b', '<MASKED_PHONE>', text)
+# 개인정보 마스킹 패턴 정리
+def remove_masking(text):
+    text = re.sub(r'\*+', '', text)  # * 마스킹 제거
     return text
 
 # 추가적인 불필요 패턴 정리 함수
@@ -84,9 +93,19 @@ def clean_extra_patterns(text: str):
         text = re.sub(keyword, '', text)
     return text
 
+# 중복 제거
+def remove_duplicates(data: pd.DataFrame):
+    # 중복 텍스트 제거
+    before = len(data)
+    data = data.drop_duplicates(subset='proc_text').reset_index(drop=True)
+    after = len(data)
+
+    return data
+    
+
 def preprocess(text: str):
     # 민감 정보 먼저 마스킹 
-    proc_txt = mask_sensitive_info(text)
+    proc_txt = remove_masking(text)
     # URL 처리
     proc_txt = del_url(proc_txt)
     # 개행, 탭 등 공백 처리
@@ -105,6 +124,10 @@ def preprocess(text: str):
     proc_txt = clean_extra_patterns(proc_txt)
     # 양쪽 공백 제거
     proc_txt = proc_txt.strip()
+    # 발신자, 불필요 접두어 제거
+    proc_txt = clean_sender_info(proc_txt)
+    # 과도한 공백 제거
+    proc_txt = clean_whitespace(proc_txt)
     return proc_txt
 
 def processing(args, data, is_test=False):
@@ -121,6 +144,10 @@ def processing(args, data, is_test=False):
     
     # text processing
     data['proc_text'] = list(map(preprocess, data['text']))
+    
+    # 중복 샘플 제거
+    data = remove_duplicates(data)
+    
     return data
 
 

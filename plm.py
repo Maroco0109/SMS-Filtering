@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from pytorch_lightning import LightningModule
 from transformers.optimization import AdamW, get_cosine_schedule_with_warmup
 from transformers import AdamW, get_linear_schedule_with_warmup
-from torchmetrics import Accuracy
+from torchmetrics import Accuracy, F1Score
 from transformers.modeling_outputs import SequenceClassifierOutput
 
 
@@ -52,16 +52,33 @@ huggingface에 공개된 한국어 사전학습 모델 사용
     BigBird: monologg/kobigbird-bert-base (현재 비공개 처리됨)
     RoBERTa: klue/roberta-base     
 '''
+# 추가 레이어 생성
+class CustomClassifier(torch.nn.Module):
+    def __init__(self, hidden_size, num_labels=2):
+        super(CustomClassifier, self).__init__()
+        self.classifier = torch.nn.Sequential(
+            torch.nn.Linear(hidden_size, 512),
+            torch.nn.ReLU(),
+            # torch.nn.Dropout(0.2),
+            torch.nn.Linear(512, num_labels)
+        )
+
+    def forward(self, x):
+        return self.classifier(x)
+    
 class LightningPLM(LightningModule):
     def __init__(self, hparams):
         super(LightningPLM, self).__init__()
         self.save_hyperparameters(hparams)
         self.validation_step_outputs = []
-        self.accuracy = Accuracy(task="binary")
-        self.softmax = torch.nn.Softmax(dim=-1)
 
         self.model_type = hparams.model_type.lower()
         self.model, self.tokenizer = load_model(model_type=self.model_type, num_labels=self.hparams.num_labels)
+        
+        # Custom Classifier 추가
+        hidden_size = self.model.config.hidden_size
+        self.custom_classifier = CustomClassifier(hidden_size, num_labels=self.hparams.num_labels)
+        
         # 손실 함수 설정
         if getattr(hparams, 'use_focal_loss', False):
             self.loss_function = FocalLoss(alpha=1.0, gamma=2.0)
@@ -70,7 +87,9 @@ class LightningPLM(LightningModule):
             self.loss_function = torch.nn.CrossEntropyLoss()
             print("✅ Using CrossEntropyLoss")
         
-        self.dropout = torch.nn.Dropout(0.3)      # ✅ Dropout 추가
+        self.softmax = torch.nn.Softmax(dim=-1)
+        self.accuracy = Accuracy(task="binary")
+        self.f1_score = F1Score(task="binary")
         
         # freeze
         self.freeze_encoder_layers(num_layers=4)
@@ -81,25 +100,36 @@ class LightningPLM(LightningModule):
         parser = argparse.ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument('--batch-size',
                             type=int,
-                            default=32,
-                            help='batch size for training (default: 96)')
+                            default=64,
+                            help='batch size for training (default: 32)')
         parser.add_argument('--lr',
                             type=float,
-                            default=1e-5,
+                            default=2e-5,
                             help='The initial learning rate')
         parser.add_argument('--warmup_ratio',
                             type=float,
-                            default=0.2,    # warmup ratio 수정
+                            default=0.1,    # warmup ratio 수정
                             help='warmup ratio')
         return parser
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None, labels=None):
         if token_type_ids is None:
-            token_type_ids = torch.zeros(input_ids.size(), dtype=torch.int).type_as(input_ids)
-        output = self.model(input_ids=input_ids, attention_mask=attention_mask, \
-            token_type_ids=token_type_ids, labels=labels, return_dict=True)
+            token_type_ids = torch.zeros(
+                input_ids.size(), 
+                dtype=torch.int
+                ).type_as(input_ids)
+        output = self.model(
+            input_ids=input_ids, 
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids, 
+            labels=labels,
+            output_hidden_states = True, # hidden state 설정
+            return_dict=True
+            )
         
-        logits = self.dropout(output.logits)    # ✅ Dropout 적용
+        pooled_output = output.hidden_states[-1][:,0,:] # [CLS] 토큰
+        logits = self.custom_classifier(pooled_output)
+        
         return SequenceClassifierOutput(  # ✅ 직접 생성하여 반환
             loss=output.loss,
             logits=logits,
@@ -108,14 +138,12 @@ class LightningPLM(LightningModule):
         )
 
     def training_step(self, batch, batch_idx):
-        threshold = 0.6
         input_ids, attention_mask, label = batch
         output = self(input_ids=input_ids, attention_mask=attention_mask, labels=label)
         probs = self.softmax(output.logits)[:, 1]
-        preds = (probs >= threshold).long()
         self.log_dict({
             'train_loss' : output.loss,
-            'train_acc' : self.accuracy(preds, label)
+            'train_acc' : self.accuracy(probs, label)
         }, prog_bar=True)
 
         return output.loss
@@ -123,14 +151,17 @@ class LightningPLM(LightningModule):
     def validation_step(self, batch, batch_idx):
         input_ids, attention_mask, label = batch
         output = self(input_ids=input_ids, attention_mask=attention_mask, labels=label)
-        acc = self.accuracy(self.softmax(output.logits).argmax(dim=-1), label)
+        preds = self.softmax(output.logits).argmax(dim=-1)
+        acc = self.accuracy(preds, label)
+        f1 = self.f1_score(preds, label)
 
         # 결과 저장
-        self.validation_step_outputs.append({'val_loss': output.loss, 'val_acc': acc})
+        self.validation_step_outputs.append({'val_loss': output.loss, 'val_acc': acc, 'val_f1': f1})
 
         self.log_dict({
             'val_loss': output.loss,
-            'val_acc': acc
+            'val_acc': acc,
+            'val_f1': f1
         }, prog_bar=True, on_step=False, on_epoch=True)
 
         return output.loss
@@ -139,14 +170,17 @@ class LightningPLM(LightningModule):
     def on_validation_epoch_end(self):
         avg_losses = []
         avg_accuracies = []
+        avg_f1s = []
 
         for output in self.validation_step_outputs:
             avg_losses.append(output['val_loss'])
             avg_accuracies.append(output['val_acc'])
+            avg_f1s.append(output['val_f1'])
 
         self.log_dict({
             'avg_val_loss': torch.stack(avg_losses).mean(),
-            'avg_val_acc': torch.stack(avg_accuracies).mean()
+            'avg_val_acc': torch.stack(avg_accuracies).mean(),
+            'avg_val_f1': torch.stack(avg_f1s).mean()
         })
 
         # 메모리에서 리스트 초기화 (중복 방지)
@@ -161,7 +195,7 @@ class LightningPLM(LightningModule):
             {'params': [p for n, p in param_optimizer \
                 if not any(nd in n for nd in no_decay)], 'weight_decay': 0.01},
             {'params': [p for n, p in param_optimizer \
-                if any(nd in n for nd in no_decay)], 'weight_decay': 0.01}
+                if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
         ]
         optimizer = AdamW(optimizer_grouped_parameters,
                           lr=self.hparams.lr, correct_bias=False)

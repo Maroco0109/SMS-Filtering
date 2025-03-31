@@ -3,7 +3,6 @@ import re
 import json
 import os
 import glob
-from config import Label
 from sklearn.model_selection import train_test_split
 
 def main():
@@ -21,8 +20,8 @@ def main():
     spam_csv_files = glob.glob(config["spam"]["input_dir"])
 
     # 데이터셋 전처리
-    preprocess_ham(ham_csv_files, config["ham_csv"]["output_file"])
-    preprocess_spam(spam_csv_files, config["spam"]["output_file"])
+    # preprocess_ham(ham_csv_files, config["ham_csv"]["output_file"])
+    # preprocess_spam(spam_csv_files, config["spam"]["output_file"])
 
     # 데이터셋 병합
     input_path_pattern = config["sms-data"]["input_dir"]
