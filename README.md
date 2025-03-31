@@ -5,10 +5,10 @@
 - NLP모델들을 활용하여 스팸 메세지를 필터링하는 모델 구현
   - 스팸 메세지에 해당하는 카테고리를 설정하여 KoBERT 모델을 통해 해당 SMS가 스팸 카테고리에 포함되는지 파악하여 필터링
   - 여러 한국어 처리 pre-trained 모델 사용 및 성능 비교 분석(https://github.com/monologg)
-   - KoBERT
-   - KoELECTRA
-   - KoRoberta
-   - KoBigBird
+  - KoBERT
+  - KoELECTRA
+  - KoRoberta
+  - KoBigBird
 - Sentiment Predict Example
   - ![Sentiment Predict Example](https://github.com/user-attachments/assets/094c3de1-eddc-4d16-b66e-29129824343b)
 
@@ -59,7 +59,6 @@ Spam SMS Filtering/
 
 ---
 
-
 ## 🚀 How to Run
 
 1. **환경 설정(old)**:
@@ -73,9 +72,11 @@ pip install -r requirements.txt
 ```bash
 python utils/data_preprocessing.py
 ```
+
 ```bash
 python build_dataset.py --split --data_dir ../data --save_dir ../result
 ```
+
 ```bash
 python build_dataset.py --split --use_test --data_dir ../data --save_dir ../result
 ```
@@ -85,12 +86,14 @@ python build_dataset.py --split --use_test --data_dir ../data --save_dir ../resu
 ### Electra
 
 - Cross Entrophy
+
 ```bash
 python main.py --train --data_dir result \
 --model_type electra --model_name electra+revised --max_len 64 --gpuid 0
 ```
 
 - Focal loss
+
 ```bash
 python main.py --train --data_dir result \
 --model_type electra --model_name electra+revised --max_len 64 --gpuid 0 --use_focal_loss
@@ -99,12 +102,14 @@ python main.py --train --data_dir result \
 ### Bert
 
 - Cross Entrophy
+
 ```bash
 python main.py --train --data_dir result \
 --model_type bert --model_name bert+revised --max_len 64 --gpuid 0
 ```
 
 - Focal loss
+
 ```bash
 python main.py --train --data_dir result \
 --model_type bert --model_name bert+revised --max_len 64 --gpuid 0 --use_focal_loss
@@ -113,12 +118,14 @@ python main.py --train --data_dir result \
 ### Roberta
 
 - Cross Entrophy
+
 ```bash
 python main.py --train --data_dir result \
 --model_type roberta --model_name roberta+revised --max_len 64 --gpuid 0
 ```
 
 - Focal loss
+
 ```bash
 python main.py --train --data_dir result \
 --model_type roberta --model_name roberta+revised --max_len 64 --gpuid 0 --use_focal_loss
@@ -127,18 +134,28 @@ python main.py --train --data_dir result \
 ### Bigbird
 
 - Cross Entrophy
+
 ```bash
 python main.py --train --data_dir result \
 --model_type bigbird --model_name bigbird+revised --max_len 64 --gpuid 0
 ```
 
 - Focal loss
+
 ```bash
 python main.py --train --data_dir result \
 --model_type bigbird --model_name bigbird+revised --max_len 64 --gpuid 0 --use_focal_loss
 ```
 
 4. 테스트:
+
+### 데이터 출력
+
+```bash
+python utils/test_case.py
+```
+
+### Bert
 
 ```bash
 python main.py --pred --data_dir result \
@@ -150,6 +167,17 @@ python main.py --pred --data_dir result \
 python utils/predict_text.py --model_type bert --model_pt model_ckpt/epoch=03-avg_val_acc=1.00.ckpt --gpuid 0
 ```
 
+### Electra
+
+```bash
+python main.py --pred \
+--data_dir result \
+--model_type electra \
+--model_name electra+revised \
+--model_pt model_ckpt/epoch=01-avg_val_acc=1.00.ckpt \
+--max_len 64 --gpuid 0
+```
+
 📦 Requirements
 이 프로젝트에서 필요한 Python 패키지는 requirements.txt에 명시되어 있습니다. 설치하려면 다음 명령어를 실행하세요:
 
@@ -158,7 +186,9 @@ pip install -r requirements.txt
 ```
 
 Phase 1: Model Conversion and Optimization
+
 1. Convert PyTorch Model to Mobile Format
+
    - Convert the KoBERT model to TorchScript format
    - Optimize the model size using quantization
    - Export the model in a format compatible with PyTorch Mobile
@@ -169,7 +199,9 @@ Phase 1: Model Conversion and Optimization
    - Package model files and assets for Android integration
 
 Phase 2: Android App Development
+
 1. Project Setup
+
    - Create a new Android project in Android Studio
    - Set up the required dependencies:
      ```gradle
@@ -181,7 +213,9 @@ Phase 2: Android App Development
      ```
 
 2. App Architecture(example)
+
    - by Kotlin or Dart
+
    ```
    app/
    ├── java/
@@ -209,7 +243,9 @@ Phase 2: Android App Development
    - Add message history feature
 
 Phase 3: Model Integration
+
 1. Port the Prediction Logic
+
 ```java
 public class SpamPredictor {
     private Module model;
@@ -229,6 +265,7 @@ public class SpamPredictor {
 ```
 
 2. Implement Tokenizer
+
 ```java
 public class KoBertTokenizer {
     // Port the Python tokenizer logic to Java
@@ -240,7 +277,9 @@ public class KoBertTokenizer {
 ```
 
 Phase 4: User Interface Development
+
 1. Main Screen
+
    - Text input field
    - "Check Message" button
    - History of recent checks
@@ -253,7 +292,9 @@ Phase 4: User Interface Development
    - Action buttons (Report false positive/negative)
 
 Phase 5: Additional Features
+
 1. Real-time SMS Monitoring
+
    - Background service for SMS monitoring
    - Notification system for spam detection
    - Auto-categorization of messages
@@ -265,7 +306,9 @@ Phase 5: Additional Features
    - Theme options
 
 Phase 6: Testing and Optimization
+
 1. Performance Testing
+
    - Model inference speed
    - Memory usage
    - Battery consumption
@@ -276,7 +319,9 @@ Phase 6: Testing and Optimization
    - Check edge cases
 
 Phase 7: Deployment and Maintenance
+
 1. Release Preparation
+
    - App optimization
    - Documentation
    - Privacy policy
@@ -288,6 +333,7 @@ Phase 7: Deployment and Maintenance
    - Plan updates and improvements
 
 Timeline Estimation:
+
 - Phase 1: 1-2 weeks
 - Phase 2: 1 week
 - Phase 3: 2 weeks
