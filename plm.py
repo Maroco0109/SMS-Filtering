@@ -75,9 +75,9 @@ class LightningPLM(LightningModule):
         self.model_type = hparams.model_type.lower()
         self.model, self.tokenizer = load_model(model_type=self.model_type, num_labels=self.hparams.num_labels)
         
-        # Custom Classifier 추가
-        hidden_size = self.model.config.hidden_size
-        self.custom_classifier = CustomClassifier(hidden_size, num_labels=self.hparams.num_labels)
+        # # Custom Classifier 추가
+        # hidden_size = self.model.config.hidden_size
+        # self.custom_classifier = CustomClassifier(hidden_size, num_labels=self.hparams.num_labels)
         
         # 손실 함수 설정
         if getattr(hparams, 'use_focal_loss', False):
