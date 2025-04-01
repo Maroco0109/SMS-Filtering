@@ -1,0 +1,33 @@
+{
+    "ham_csv": {
+        "input_dir": "/home/maroco/SMS-Filtering/data/raw/ham/csv/*.csv",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/ham_data.csv"
+    },
+    "ham_xlsx": {
+        "input_dir": "/home/maroco/SMS-Filtering/data/raw/ham/xlsx/*.xlsx",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/ham_data_xlsx.csv"
+    },
+    "spam": {
+        "input_dir": "/home/maroco/SMS-Filtering/data/raw/spam/csv/*.csv",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/spam_data.csv"
+    },
+    "spam_xlsx": {
+        "input_dir": "/home/maroco/SMS-Filtering/data/raw/spam/xlsx/*.xlsx",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/spam_data_xlsx.csv"
+    },
+    "sms-data":{
+        "input_dir": "/home/maroco/SMS-Filtering/data/preprocessed/*.csv",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/sms_data.csv"
+    },
+    "train" :{
+        "input_dir": "/home/maroco/SMS-Filtering/data/preprocessed/sms_data.csv",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/train.csv"
+    },
+    "test" :{
+        "input_dir": "/home/maroco/SMS-Filtering/data/preprocessed/sms_data.csv",
+        "output_file": "/home/maroco/SMS-Filtering/data/preprocessed/test.csv"
+    },
+    "model" :{
+        "output_file": "/home/maroco/SMS-Filtering/model"
+    }
+}
