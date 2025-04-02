@@ -59,7 +59,7 @@ class CustomClassifier(torch.nn.Module):
         self.classifier = torch.nn.Sequential(
             torch.nn.Linear(hidden_size, 512),
             torch.nn.ReLU(),
-            # torch.nn.Dropout(0.2),
+            torch.nn.Dropout(0.2),
             torch.nn.Linear(512, num_labels)
         )
 
@@ -88,11 +88,12 @@ class LightningPLM(LightningModule):
             print("✅ Using CrossEntropyLoss")
         
         self.softmax = torch.nn.Softmax(dim=-1)
-        self.accuracy = Accuracy(task="binary")
+        # self.accuracy = Accuracy(task="binary")
+        self.accuracy = pl.metrics.Accuracy()
         self.f1_score = F1Score(task="binary")
         
-        # freeze
-        self.freeze_encoder_layers(num_layers=4)
+        # # freeze encoders
+        # self.freeze_encoder_layers(num_layers=4)
 
     @staticmethod
     def add_model_specific_args(parent_parser):
@@ -123,19 +124,20 @@ class LightningPLM(LightningModule):
             attention_mask=attention_mask,
             token_type_ids=token_type_ids, 
             labels=labels,
-            output_hidden_states = True, # hidden state 설정
+            # output_hidden_states = True, # hidden state 설정
             return_dict=True
             )
+        return output   # pre-trained vanila bert model
         
-        pooled_output = output.hidden_states[-1][:,0,:] # [CLS] 토큰
-        logits = self.custom_classifier(pooled_output)
-        
-        return SequenceClassifierOutput(  # ✅ 직접 생성하여 반환
-            loss=output.loss,
-            logits=logits,
-            hidden_states=output.hidden_states,
-            attentions=output.attentions
-        )
+        # pooled_output = output.hidden_states[-1][:,0,:] # [CLS] 토큰
+        # logits = self.custom_classifier(pooled_output)
+        # 
+        # return SequenceClassifierOutput(  # ✅ 직접 생성하여 반환
+        #     loss=output.loss,
+        #     logits=logits,
+        #     hidden_states=output.hidden_states,
+        #     attentions=output.attentions
+        # )
 
     def training_step(self, batch, batch_idx):
         input_ids, attention_mask, label = batch
