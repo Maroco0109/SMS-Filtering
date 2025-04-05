@@ -148,6 +148,16 @@ def processing(args, data, is_test=False):
     # 중복 샘플 제거
     data = remove_duplicates(data)
     
+    # 짧은 문장 제거
+    data['proc_len'] = data['proc_text'].apply(lambda x: len(x.split()))
+    data=data[data['proc_len']>3].copy()
+    data.drop(columns='proc_len',inplace=True)
+    
+    # 전처리 변화율 로깅
+    change_ratio = (data['text'] != data['proc_text']).mean()
+    print(f"✅ 전처리로 바뀐 샘플 비율: {change_ratio*100:.2f}%")
+
+    
     return data
 
 
