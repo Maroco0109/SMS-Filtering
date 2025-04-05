@@ -57,10 +57,10 @@ class CustomClassifier(torch.nn.Module):
     def __init__(self, hidden_size, num_labels=2):
         super(CustomClassifier, self).__init__()
         self.classifier = torch.nn.Sequential(
-            torch.nn.Linear(hidden_size, 512),
+            torch.nn.Linear(hidden_size, 256),
             torch.nn.ReLU(),
-            # torch.nn.Dropout(0.2),
-            torch.nn.Linear(512, num_labels)
+            torch.nn.Dropout(0.3),
+            torch.nn.Linear(256, num_labels)
         )
 
     def forward(self, x):
@@ -75,9 +75,17 @@ class LightningPLM(LightningModule):
         self.model_type = hparams.model_type.lower()
         self.model, self.tokenizer = load_model(model_type=self.model_type, num_labels=self.hparams.num_labels)
         
-        # # Custom Classifier 추가
-        # hidden_size = self.model.config.hidden_size
-        # self.custom_classifier = CustomClassifier(hidden_size, num_labels=self.hparams.num_labels)
+        # Custom Classifier 추가
+        hidden_size = self.model.config.hidden_size
+        
+        # ✅ 커스텀 classifier 사용 여부
+        if getattr(hparams, 'use_custom_classifier', False):
+            print("✅ Using custom classifier layers")
+            self.use_custom_classifier = True
+            self.custom_classifier = CustomClassifier(hidden_size, num_labels=hparams.num_labels)
+        else:
+            print("✅ Using default classifier head from pretrained model")
+            self.use_custom_classifier = False
         
         # 손실 함수 설정
         if getattr(hparams, 'use_focal_loss', False):
@@ -91,7 +99,7 @@ class LightningPLM(LightningModule):
         self.accuracy = Accuracy(task="binary")
         self.f1_score = F1Score(task="binary")
         
-        # freeze
+        # freeze encoders
         self.freeze_encoder_layers(num_layers=4)
 
     @staticmethod
@@ -104,7 +112,7 @@ class LightningPLM(LightningModule):
                             help='batch size for training (default: 32)')
         parser.add_argument('--lr',
                             type=float,
-                            default=2e-5,
+                            default=5e-5,
                             help='The initial learning rate')
         parser.add_argument('--warmup_ratio',
                             type=float,
@@ -126,6 +134,7 @@ class LightningPLM(LightningModule):
             output_hidden_states = True, # hidden state 설정
             return_dict=True
             )
+        # return output   # pre-trained vanila bert model
         
         pooled_output = output.hidden_states[-1][:,0,:] # [CLS] 토큰
         logits = self.custom_classifier(pooled_output)
