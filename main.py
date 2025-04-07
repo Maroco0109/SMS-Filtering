@@ -82,8 +82,14 @@ if __name__ == "__main__":
                     action='store_true',
                     help='Use Focal Loss instead of Cross Entropy')
     
-    parser.add_argument('--use_custom_classifier', action='store_true',
+    parser.add_argument('--use_custom_classifier',
+                    action='store_true',
                     help='Use additional custom classifier layers')
+    parser.add_argument('--threshold',
+                    type=float,
+                    default=0.5,
+                    help='threshold for binary classification (default: 0.5)')
+
 
     parser = LightningPLM.add_model_specific_args(parser)
     args = parser.parse_args()

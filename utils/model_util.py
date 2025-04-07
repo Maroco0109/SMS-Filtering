@@ -28,7 +28,8 @@ def load_model(model_type, num_labels=0, labels=None, cache_dir='./cache'):
         )
         model = BertForSequenceClassification.from_pretrained(
             "monologg/kobert", 
-            config=config
+            config=config,
+            trust_remote_code=True
         )
         tokenizer = AutoTokenizer.from_pretrained("monologg/kobert")
         return model, tokenizer
@@ -73,7 +74,8 @@ def load_model(model_type, num_labels=0, labels=None, cache_dir='./cache'):
         config.id2label = {label: i for i, label in enumerate(labels)}
         model = AutoModelForSequenceClassification.from_pretrained(
             "monologg/kobigbird-bert-base", 
-            config=config
+            config=config,
+            trust_remote_code=True
         )
         tokenizer = AutoTokenizer.from_pretrained("monologg/kobigbird-bert-base")
         return model, tokenizer

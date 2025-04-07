@@ -71,7 +71,7 @@ class LightningPLM(LightningModule):
         super(LightningPLM, self).__init__()
         self.save_hyperparameters(hparams)
         self.validation_step_outputs = []
-
+        self.threshold = getattr(hparams, 'threshold', 0.5) # threshold 인자 추가
         self.model_type = hparams.model_type.lower()
         self.model, self.tokenizer = load_model(model_type=self.model_type, num_labels=self.hparams.num_labels)
         
@@ -112,7 +112,7 @@ class LightningPLM(LightningModule):
                             help='batch size for training (default: 32)')
         parser.add_argument('--lr',
                             type=float,
-                            default=5e-5,
+                            default=2e-5,
                             help='The initial learning rate')
         parser.add_argument('--warmup_ratio',
                             type=float,
@@ -137,7 +137,11 @@ class LightningPLM(LightningModule):
         # return output   # pre-trained vanila bert model
         
         pooled_output = output.hidden_states[-1][:,0,:] # [CLS] 토큰
-        logits = self.custom_classifier(pooled_output)
+        # 커스텀 레이어를 사용할 경우
+        if self.use_custom_classifier:
+            logits = self.custom_classifier(pooled_output)
+        else:
+            logits = self.model.classifier(pooled_output)
         
         return SequenceClassifierOutput(  # ✅ 직접 생성하여 반환
             loss=output.loss,
@@ -150,9 +154,10 @@ class LightningPLM(LightningModule):
         input_ids, attention_mask, label = batch
         output = self(input_ids=input_ids, attention_mask=attention_mask, labels=label)
         probs = self.softmax(output.logits)[:, 1]
+        preds = (probs >= self.threshold).long()
         self.log_dict({
             'train_loss' : output.loss,
-            'train_acc' : self.accuracy(probs, label)
+            'train_acc' : self.accuracy(preds, label)
         }, prog_bar=True)
 
         return output.loss
@@ -160,7 +165,8 @@ class LightningPLM(LightningModule):
     def validation_step(self, batch, batch_idx):
         input_ids, attention_mask, label = batch
         output = self(input_ids=input_ids, attention_mask=attention_mask, labels=label)
-        preds = self.softmax(output.logits).argmax(dim=-1)
+        probs = self.softmax(output.logits)[:,1]
+        preds = (probs >= self.threshold).long()    # threshold 적용
         acc = self.accuracy(preds, label)
         f1 = self.f1_score(preds, label)
 

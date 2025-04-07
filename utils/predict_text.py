@@ -29,6 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_pt', type=str, required=True)
     parser.add_argument('--max_len', type=int, default=64)
     parser.add_argument('--gpuid', type=int, default=0)
+    parser.add_argument('--use_custom_classifier', action='store_true', help='Use custom classification head')
     args = parser.parse_args()
 
     device = torch.device(f'cuda:{args.gpuid}' if torch.cuda.is_available() else 'cpu')
