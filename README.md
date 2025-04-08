@@ -1,4 +1,4 @@
-# Spam SMS Filtering with Natural language model and Image processing
+# Spam SMS Filtering with Natural language models
 
 1. About Project
 
