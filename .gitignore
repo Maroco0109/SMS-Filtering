@@ -22,4 +22,6 @@ img/
 
 # 모델 무시
 model_ckpt/
-# git remote test
+
+# result 무시
+result/

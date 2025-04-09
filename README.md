@@ -178,6 +178,20 @@ python main.py --pred \
 --max_len 64 --gpuid 0
 ```
 
+5. 모델 추출
+
+```bash
+python main.py --train \
+--data_dir result \
+--model_type bert \
+--model_name bert+revised \
+--max_len 128 \
+--gpuid 0 \
+--use_focal_loss \
+--use_custom_classifier \
+--threshold 0.55
+```
+
 📦 Requirements
 이 프로젝트에서 필요한 Python 패키지는 requirements.txt에 명시되어 있습니다. 설치하려면 다음 명령어를 실행하세요:
 
