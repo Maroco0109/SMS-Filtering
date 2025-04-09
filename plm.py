@@ -134,21 +134,20 @@ class LightningPLM(LightningModule):
             output_hidden_states = True, # hidden state 설정
             return_dict=True
             )
-        # return output   # pre-trained vanila bert model
         
-        pooled_output = output.hidden_states[-1][:,0,:] # [CLS] 토큰
         # 커스텀 레이어를 사용할 경우
         if self.use_custom_classifier:
+            pooled_output = output.hidden_states[-1][:,0,:] # [CLS] 토큰
             logits = self.custom_classifier(pooled_output)
+            return SequenceClassifierOutput(
+                loss=output.loss,
+                logits=logits,
+                hidden_states=output.hidden_states,
+                attentions=output.attentions,
+            )
         else:
-            logits = self.model.classifier(pooled_output)
+            return output
         
-        return SequenceClassifierOutput(  # ✅ 직접 생성하여 반환
-            loss=output.loss,
-            logits=logits,
-            hidden_states=output.hidden_states,
-            attentions=output.attentions
-        )
 
     def training_step(self, batch, batch_idx):
         input_ids, attention_mask, label = batch
