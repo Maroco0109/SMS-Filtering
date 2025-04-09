@@ -1,5 +1,6 @@
 # .cache 폴더 무시(모델 생성)
 .cache/
+cache/
 
 # __pycache__ 폴더 무시
 __pycache__/
