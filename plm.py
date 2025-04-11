@@ -89,7 +89,7 @@ class LightningPLM(LightningModule):
         
         # 손실 함수 설정
         if getattr(hparams, 'use_focal_loss', False):
-            self.loss_function = FocalLoss(alpha=1.0, gamma=2.0)
+            self.loss_function = FocalLoss(alpha=[1.0, 2.0], gamma=2.0)
             print("✅ Using Focal Loss")
         else:
             self.loss_function = torch.nn.CrossEntropyLoss()
@@ -112,7 +112,7 @@ class LightningPLM(LightningModule):
                             help='batch size for training (default: 32)')
         parser.add_argument('--lr',
                             type=float,
-                            default=2e-5,
+                            default=1e-5,
                             help='The initial learning rate')
         parser.add_argument('--warmup_ratio',
                             type=float,
