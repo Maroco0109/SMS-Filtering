@@ -88,12 +88,16 @@ class LightningPLM(LightningModule):
 
         self.model, self.tokenizer = load_model(self.model_type, self.num_labels)
 
-        # Freeze first 4 encoder layers
-        encoder = getattr(self.model, self.model.base_model_prefix).encoder
-        for i in range(4):
-            for param in encoder.layer[i].parameters():
-                param.requires_grad = False
-        print("✅ Encoder layer 0 ~ 3 freeze 완료")
+        # # Freeze first 4 encoder layers
+        # try:
+        #     encoder = getattr(self.model, self.model.base_model_prefix).encoder
+        #     for i in range(4):
+        #         for param in encoder.layer[i].parameters():
+        #             param.requires_grad = False
+        #     print("✅ Encoder layer 0 ~ 3 freeze 완료")
+        # except AttributeError:
+        #     print("⚠️ Encoder layer freeze를 건너뜁니다 (base_model_prefix를 찾을 수 없음)")
+
 
         hidden_size = self.model.config.hidden_size
         if self.use_custom_classifier:
