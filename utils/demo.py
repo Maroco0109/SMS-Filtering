@@ -38,8 +38,8 @@ def index():
             with torch.no_grad():
                 outputs = model(input_ids, attention_mask)
                 probs = torch.softmax(outputs, dim=1)[0]
-                ham_prob = round(probs[0].item() * 100, 2)
-                spam_prob = round(probs[1].item() * 100, 2)
+                spam_prob = round(probs[0].item() * 100, 2)
+                ham_prob = round(probs[1].item() * 100, 2)
                 results[name] = {"ham": ham_prob, "spam": spam_prob}
         
         # 기록 저장
