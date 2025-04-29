@@ -152,7 +152,7 @@ python main.py --train --data_dir result \
 ### 데이터 출력
 
 ```bash
-python utils/test_case.py
+python utils/test_case.py --model_type bert
 ```
 
 ### Bert

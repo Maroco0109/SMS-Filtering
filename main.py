@@ -77,19 +77,6 @@ if __name__ == "__main__":
                         default=None)
             
     parser.add_argument("--gpuid", nargs='+', type=int, default=0)
-    
-    parser.add_argument('--use_focal_loss',
-                    action='store_true',
-                    help='Use Focal Loss instead of Cross Entropy')
-    
-    parser.add_argument('--use_custom_classifier',
-                    action='store_true',
-                    help='Use additional custom classifier layers')
-    parser.add_argument('--threshold',
-                    type=float,
-                    default=0.5,
-                    help='threshold for binary classification (default: 0.5)')
-
 
     parser = LightningPLM.add_model_specific_args(parser)
     args = parser.parse_args()

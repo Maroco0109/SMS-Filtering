@@ -1,0 +1,47 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>스팸 탐지 데모</title>
+  </head>
+  <body>
+    <h1>📩 스팸 메시지 탐지</h1>
+    <form method="POST">
+      <textarea
+        name="text"
+        rows="4"
+        cols="50"
+        placeholder="문장을 입력하세요"
+      ></textarea
+      ><br /><br />
+      <input type="submit" value="분석하기" />
+    </form>
+
+    {% if prediction %}
+    <h2>📊 이번 예측 결과:</h2>
+    <ul>
+      {% for model, rates in prediction.items() %}
+      <li><b>{{ model }}:</b> 햄 {{ rates.ham }}% / 스팸 {{ rates.spam }}%</li>
+      {% endfor %}
+    </ul>
+    {% endif %} {% if history %}
+    <h2>🗂️ 입력 기록 보기:</h2>
+    <ul>
+      {% for record in history %}
+      <li>
+        <b>입력:</b> {{ record.text }}<br />
+        <b>결과:</b>
+        <ul>
+          {% for model, rates in record.prediction.items() %}
+          <li>
+            <b>{{ model }}:</b> 햄 {{ rates.ham }}% / 스팸 {{ rates.spam }}%
+          </li>
+          {% endfor %}
+        </ul>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </body>
+</html>
