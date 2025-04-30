@@ -156,3 +156,23 @@ python utils/export_model.py \
 python utils/convert_to_onnx.py \
 --model_type {model}
 ```
+
+
+## Version Issues
+### Pytorch 2.7.0, Cuda 12.7
+- Pytorch 2.7.0, transformers 4.46.3 에서 연산자 문제 발생
+  - Scaled dot product attention
+
+### 해결 방법
+- Pytorch = 2.3.1, transformers = 4.26.1, cuda = 11.8
+```bash
+pip install torch==2.3.1+cu118 torchvision==0.16.1+cu118 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu118
+```
+```bash
+pip install transformers==4.26.1
+
+```
+- 기타 패키지
+```bash
+pip install pytorch-lightning==2.0.9 torchmetrics==0.11.4
+```
