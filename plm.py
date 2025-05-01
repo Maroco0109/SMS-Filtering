@@ -60,10 +60,16 @@ class CustomClassifier(torch.nn.Module):
     def __init__(self, hidden_size, num_labels=2):
         super(CustomClassifier, self).__init__()
         self.classifier = torch.nn.Sequential(
-            torch.nn.Linear(hidden_size, 256),
+            torch.nn.Linear(hidden_size, 512),
             torch.nn.ReLU(),
-            torch.nn.Dropout(0.3),
-            torch.nn.Linear(256, num_labels)
+            torch.nn.Dropout(0.2),
+            torch.nn.Linear(512, 256),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(0.2),
+            torch.nn.Linear(256, 128),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(0.2),
+            torch.nn.Linear(128, num_labels)
         )
 
     def forward(self, x):
@@ -88,15 +94,15 @@ class LightningPLM(LightningModule):
 
         self.model, self.tokenizer = load_model(self.model_type, self.num_labels)
 
-        # # Freeze first 4 encoder layers
-        # try:
-        #     encoder = getattr(self.model, self.model.base_model_prefix).encoder
-        #     for i in range(4):
-        #         for param in encoder.layer[i].parameters():
-        #             param.requires_grad = False
-        #     print("✅ Encoder layer 0 ~ 3 freeze 완료")
-        # except AttributeError:
-        #     print("⚠️ Encoder layer freeze를 건너뜁니다 (base_model_prefix를 찾을 수 없음)")
+        # Freeze first 4 encoder layers
+        try:
+            encoder = getattr(self.model, self.model.base_model_prefix).encoder
+            for i in range(4):
+                for param in encoder.layer[i].parameters():
+                    param.requires_grad = False
+            print("✅ Encoder layer 0 ~ 3 freeze 완료")
+        except AttributeError:
+            print("⚠️ Encoder layer freeze를 건너뜁니다 (base_model_prefix를 찾을 수 없음)")
 
 
         hidden_size = self.model.config.hidden_size
