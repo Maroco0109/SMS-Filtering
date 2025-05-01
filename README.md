@@ -80,17 +80,21 @@ python utils/data_preprocessing.py
 ```
 
 ### without testcase
+
 ```bash
 python build_dataset.py --split --data_dir ../data --save_dir ../result
 ```
 
 ### with testcase
+
 ```bash
 python build_dataset.py --split --use_test --data_dir ../data --save_dir ../result
 ```
 
 3. 모델 학습:
+
 ### Arguments
+
 - model_type: bert, electra, roberta, bigbird
 - model_name: bert+revised, electra+revised, roberta+revised, bigbird+revised
 - max_len: 학습에 사용할 문장 길이(64, 128, 256, ...)
@@ -101,39 +105,46 @@ python build_dataset.py --split --use_test --data_dir ../data --save_dir ../resu
 
 ```bash
 python main.py --train --data_dir result \
---model_type {model}\
---model_name {model+revised}\
---max_len {hprams}\
---gpuid 0\
---use_custom_classifier\
---use_focal_loss\
+--model_type {model} \
+--model_name {model+revised} \
+--max_len {hprams} \
+--gpuid 0 \
+--use_custom_classifier \
+--use_focal_loss \
 --threshold {0.xx}
 ```
 
-
 4. 테스트:
+
 ### Arguments
+
 - model_pt: 학습 완료된 ckpt 파일 경로
 
-#### pred_{model}+revised.csv 생성
+#### pred\_{model}+revised.csv 생성
+
 ```bash
 python main.py --pred --data_dir result \
---model_type {model}\
+--model_type {model} \
 --model_name {model+revised} \
---model_pt {model.ckpt directory}\
---max_len {hparams.yaml 참조}\
---gpuid 0
+--model_pt {model.ckpt directory} \
+--max_len {hparams.yaml 참조} \
+--gpuid 0 \
+--use_custom_classifier \
+--use_focal_loss \
+--threshold=0.6
 ```
 
 #### ckpt test with user inputs
+
 ```bash
-python utils/predict_text.py\
---model_type {model}\
---model_pt {model.ckpt directory}\
+python utils/predict_text.py \
+--model_type {model} \
+--model_pt {model.ckpt directory} \
 --gpuid 0
 ```
 
-### pred_{model}+revised.csv 데이터 분포 출력
+### pred\_{model}+revised.csv 데이터 분포 출력
+
 ```bash
 python utils/test_case.py \
 --model_type {model}
@@ -142,6 +153,7 @@ python utils/test_case.py \
 5. 모델 추출
 
 ### ckpt to pt
+
 ```bash
 python utils/export_model.py \
 --model_type {model} \
@@ -152,27 +164,34 @@ python utils/export_model.py \
 ```
 
 ### pt to onnx
+
 ```bash
 python utils/convert_to_onnx.py \
 --model_type {model}
 ```
 
-
 ## Version Issues
+
 ### Pytorch 2.7.0, Cuda 12.7
+
 - Pytorch 2.7.0, transformers 4.46.3 에서 연산자 문제 발생
   - Scaled dot product attention
 
 ### 해결 방법
+
 - Pytorch = 2.3.1, transformers = 4.26.1, cuda = 11.8
+
 ```bash
 pip install torch==2.3.1+cu118 torchvision==0.16.1+cu118 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu118
 ```
+
 ```bash
 pip install transformers==4.26.1
 
 ```
+
 - 기타 패키지
+
 ```bash
 pip install pytorch-lightning==2.0.9 torchmetrics==0.11.4
 ```
