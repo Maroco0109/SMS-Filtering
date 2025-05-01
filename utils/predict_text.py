@@ -39,7 +39,7 @@ if __name__ == '__main__':
     
     # ⚡ plm.py는 홈 디렉토리에 있으므로, 경로 그대로 유지
     from plm import LightningPLM
-    plm_model = LightningPLM.load_from_checkpoint(checkpoint_path=args.model_pt, hparams=args)
+    plm_model = LightningPLM.load_from_checkpoint(checkpoint_path=args.model_pt, **vars(args))
     model = plm_model.model  # huggingface model
 
     print("📢 모델 로딩 완료! 문장을 입력하세요. 종료하려면 'exit' 입력")
