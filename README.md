@@ -102,6 +102,7 @@ python build_dataset.py --split --use_test --data_dir ../data --save_dir ../resu
 - use_custom_classifier: custom classifier를 사용할 때(default: pure LLM)
 - use_focal_loss: focal loss를 사용할 때(default: cross entrophy)
 - threshold 0.xx: threshold 조정 시(default: 0.5)
+- freeze_encoder: 초기 레이어 freezing 설정 여부
 
 ```bash
 python main.py --train --data_dir result \
@@ -112,6 +113,7 @@ python main.py --train --data_dir result \
 --use_custom_classifier \
 --use_focal_loss \
 --threshold {0.xx}
+--freeze_encoder
 ```
 
 4. 테스트:
@@ -120,7 +122,7 @@ python main.py --train --data_dir result \
 
 - model_pt: 학습 완료된 ckpt 파일 경로
 
-#### pred\_{model}+revised.csv 생성
+### pred\_{model}+revised.csv 생성
 
 ```bash
 python main.py --pred --data_dir result \
@@ -134,7 +136,7 @@ python main.py --pred --data_dir result \
 --threshold=0.6
 ```
 
-#### ckpt test with user inputs
+### ckpt test with user inputs
 
 ```bash
 python utils/predict_text.py \
