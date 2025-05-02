@@ -62,13 +62,13 @@ class CustomClassifier(torch.nn.Module):
         self.classifier = torch.nn.Sequential(
             torch.nn.Linear(hidden_size, 512),
             torch.nn.ReLU(),
-            torch.nn.Dropout(0.2),
+            torch.nn.Dropout(0.5),
             torch.nn.Linear(512, 256),
             torch.nn.ReLU(),
-            torch.nn.Dropout(0.2),
+            torch.nn.Dropout(0.5),
             torch.nn.Linear(256, 128),
             torch.nn.ReLU(),
-            torch.nn.Dropout(0.2),
+            torch.nn.Dropout(0.5),
             torch.nn.Linear(128, num_labels)
         )
 
@@ -95,14 +95,16 @@ class LightningPLM(LightningModule):
         self.model, self.tokenizer = load_model(self.model_type, self.num_labels)
 
         # Freeze first 4 encoder layers
-        try:
-            encoder = getattr(self.model, self.model.base_model_prefix).encoder
-            for i in range(4):
-                for param in encoder.layer[i].parameters():
-                    param.requires_grad = False
-            print("✅ Encoder layer 0 ~ 3 freeze 완료")
-        except AttributeError:
-            print("⚠️ Encoder layer freeze를 건너뜁니다 (base_model_prefix를 찾을 수 없음)")
+        if getattr(self.hparams, "freeze_encoder", False):
+            try:
+                encoder = getattr(self.model, self.model.base_model_prefix).encoder
+                for i in range(4):
+                    for param in encoder.layer[i].parameters():
+                        param.requires_grad = False
+                print("✅ Encoder layer 0 ~ 3 freeze 완료")
+            except AttributeError:
+                print("⚠️ Encoder layer freeze 실패 (base_model_prefix 없음)")
+
 
 
         hidden_size = self.model.config.hidden_size
@@ -134,6 +136,7 @@ class LightningPLM(LightningModule):
         parser.add_argument('--threshold', type=float, default=0.5, help='Threshold for binary classification')
         parser.add_argument('--use_focal_loss', action='store_true', help='Use focal loss if set')
         parser.add_argument('--use_custom_classifier', action='store_true', help='Use custom classifier if set')
+        parser.add_argument('--freeze_encoder', action='store_true', help='Freeze encoder layers 0~3')
         return parser
 
 
@@ -235,7 +238,7 @@ class LightningPLM(LightningModule):
         optimizer_grouped_parameters = [
             {
                 "params": [p for n, p in self.named_parameters() if not any(nd in n for nd in no_decay)],
-                "weight_decay": 0.01,
+                "weight_decay": 0.05,   # 25.05.02 0.01 -> 0.05
             },
             {
                 "params": [p for n, p in self.named_parameters() if any(nd in n for nd in no_decay)],
