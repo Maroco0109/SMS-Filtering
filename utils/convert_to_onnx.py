@@ -19,7 +19,7 @@ def convert_model_to_onnx(model_type):
 
     # 2. 경로 설정
     hparam_path = os.path.join("lightning_logs", model_type, "hparams.yaml")
-    pt_path = os.path.join("result", "model", f"{model_type}_{model_type}revised.pt")
+    pt_path = os.path.join("result", "model", f"{model_type}", f"{model_type}_{model_type}revised.pt")
     output_path = os.path.join("result", "onnx", f"{model_type}.onnx")
 
     if not os.path.isfile(hparam_path):
@@ -33,8 +33,8 @@ def convert_model_to_onnx(model_type):
     max_len = hparams.get("max_len", 128)
 
     # 4. 모델 및 토크나이저 로딩
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name, trust_remote_code=True)
     model.load_state_dict(torch.load(pt_path, map_location=torch.device('cpu')))
     model.eval()
 

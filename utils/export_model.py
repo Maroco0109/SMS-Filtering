@@ -4,60 +4,40 @@ import yaml
 import os
 import types
 import sys
-import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from plm import LightningPLM
-
-class Wrapper(torch.nn.Module):
-    def __init__(self, model):
-        super().__init__()
-        self.model = model
-
-    def forward(self, input_ids, attention_mask):
-        outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
-        return outputs.logits
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_type', type=str, required=True)
-    parser.add_argument('--model_pt', type=str, required=True)
+    parser.add_argument('--model_pt', type=str, required=True)         # .ckpt 파일
     parser.add_argument('--output_dir', type=str, required=True)
     parser.add_argument('--hparams_path', type=str, required=True)
     args = parser.parse_args()
 
-    # hparams 읽기
+    # hparams.yaml 불러오기
     with open(args.hparams_path, 'r') as f:
         hparams = yaml.safe_load(f)
-
     if isinstance(hparams, types.SimpleNamespace):
         hparams = vars(hparams)
 
+    # Lightning ckpt 로드
     model = LightningPLM.load_from_checkpoint(args.model_pt, hparams=hparams)
     model.eval()
     model.to('cpu')
-    
+
+    # HuggingFace base 모델만 추출
     plm_model = model.model
 
-    dummy = {
-        'input_ids': torch.randint(0, 100, (1, hparams["max_len"]), dtype=torch.long),
-        'attention_mask': torch.ones((1, hparams["max_len"]), dtype=torch.long)
-    }
-
-    wrapper = Wrapper(plm_model)
-    wrapper.eval()
-
-    if args.model_type.lower() == 'bigbird':    # bigbird 모델 구조 차이로 인해 프로젝트 제외
-        scripted_model = torch.jit.script(wrapper)
-    else:
-        scripted_model = torch.jit.trace(wrapper, (dummy['input_ids'], dummy['attention_mask']))
-
-
+    # 저장 경로 생성
     os.makedirs(args.output_dir, exist_ok=True)
     model_filename = args.model_type + "_" + hparams["model_name"].replace("+", "") + ".pt"
     output_path = os.path.join(args.output_dir, model_filename)
 
-    scripted_model.save(output_path)
-    print(f"✅ Saved to {output_path}")
+    # ✅ state_dict 저장
+    torch.save(plm_model.state_dict(), output_path)
+
+    print(f"✅ Saved state_dict to {output_path}")
 
 if __name__ == "__main__":
     main()
