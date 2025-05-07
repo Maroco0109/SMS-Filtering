@@ -47,13 +47,14 @@ def convert_model_to_onnx(model_type):
     # 7. 변환
     torch.onnx.export(
         model,
-        (dummy["input_ids"], dummy["attention_mask"]),
+        (dummy["input_ids"], dummy["attention_mask"], dummy["token_type_ids"]),
         output_path,
-        input_names=["input_ids", "attention_mask"],
+        input_names=["input_ids", "attention_mask", "token_type_ids"],
         output_names=["logits"],
         dynamic_axes={
             "input_ids": {0: "batch_size", 1: "sequence_length"},
             "attention_mask": {0: "batch_size", 1: "sequence_length"},
+            "token_type_ids": {0: "batch_size", 1: "sequence_length"},
             "logits": {0: "batch_size"}
         },
         opset_version=13
