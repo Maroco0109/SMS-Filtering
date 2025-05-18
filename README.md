@@ -33,16 +33,22 @@ Spam SMS Filtering/
 │ └── preprocessed/ # 전처리된 데이터
 ├── preprocess/
 │ ├── build_dataset.py
+│ ├── merge_sms_datasets.py
 │ ├── preprocess.py
 │ ├── process_test.py
 │ └── util.py
+├── templates/
+│ ├── index.html  # demo.py web page
 ├── utils/
 │ ├── __init__.py
-│ ├── config.py # 하이퍼파라미터 및 매개변수
+│ ├── convert_to_onnx.py   # pt to onnx
 │ ├── data_util.py   # 데이터 토큰화
+│ ├── dataset_diversity.py # dataset 분포 확인
+│ ├── demo_console.py   # user input을 console에서 받는 demo
+│ ├── demo.py  # user input을 web에서 받는 demo
+│ ├── export_model.py   # ckpt to pt
 │ ├── logger.py   # Log 파일 생성
 │ ├── model_util.py  # 한국어 LLM
-│ ├── data_preprocessing.py # 스팸/햄 데이터 전처리 관련 코드
 │ └── predict_text.py   # 감성 분석
 ├── main.py # 메인
 ├── plm.py  # 모델 호출 및 훈련
@@ -61,7 +67,7 @@ Spam SMS Filtering/
 
 ## 🚀 How to Run
 
-1. **환경 설정(old)**:
+1. **환경 설정**:
 
 ```bash
 pip install -r requirements.txt
@@ -73,9 +79,13 @@ pip install -r requirements.txt
 python utils/data_preprocessing.py
 ```
 
+### without testcase
+
 ```bash
 python build_dataset.py --split --data_dir ../data --save_dir ../result
 ```
+
+### with testcase
 
 ```bash
 python build_dataset.py --split --use_test --data_dir ../data --save_dir ../result
@@ -83,277 +93,107 @@ python build_dataset.py --split --use_test --data_dir ../data --save_dir ../resu
 
 3. 모델 학습:
 
-### Electra
+### Arguments
 
-- Cross Entrophy
-
-```bash
-python main.py --train --data_dir result \
---model_type electra --model_name electra+revised --max_len 64 --gpuid 0
-```
-
-- Focal loss
-
-```bash
-python main.py --train --data_dir result \
---model_type electra --model_name electra+revised --max_len 64 --gpuid 0 --use_focal_loss
-```
-
-### Bert
-
-- Cross Entrophy
+- model_type: bert, electra, roberta, bigbird
+- model_name: bert+revised, electra+revised, roberta+revised, bigbird+revised
+- max_len: 학습에 사용할 문장 길이(64, 128, 256, ...)
+- gpuid: 0(default), 1(if using 2nd gpu)
+- use_custom_classifier: custom classifier를 사용할 때(default: pure LLM)
+- use_focal_loss: focal loss를 사용할 때(default: cross entrophy)
+- threshold 0.xx: threshold 조정 시(default: 0.5)
+- freeze_encoder: 초기 레이어 freezing 설정 여부
 
 ```bash
 python main.py --train --data_dir result \
---model_type bert --model_name bert+revised --max_len 64 --gpuid 0
-```
-
-- Focal loss
-
-```bash
-python main.py --train --data_dir result \
---model_type bert --model_name bert+revised --max_len 64 --gpuid 0 --use_focal_loss
-```
-
-### Roberta
-
-- Cross Entrophy
-
-```bash
-python main.py --train --data_dir result \
---model_type roberta --model_name roberta+revised --max_len 64 --gpuid 0
-```
-
-- Focal loss
-
-```bash
-python main.py --train --data_dir result \
---model_type roberta --model_name roberta+revised --max_len 64 --gpuid 0 --use_focal_loss
-```
-
-### Bigbird
-
-- Cross Entrophy
-
-```bash
-python main.py --train --data_dir result \
---model_type bigbird --model_name bigbird+revised --max_len 64 --gpuid 0
-```
-
-- Focal loss
-
-```bash
-python main.py --train --data_dir result \
---model_type bigbird --model_name bigbird+revised --max_len 64 --gpuid 0 --use_focal_loss
+--model_type {model} \
+--model_name {model+revised} \
+--max_len {hprams} \
+--gpuid 0 \
+--use_custom_classifier \
+--use_focal_loss \
+--threshold {0.xx}
+--freeze_encoder
 ```
 
 4. 테스트:
 
-### 데이터 출력
+### Arguments
 
-```bash
-python utils/test_case.py --model_type bert
-```
+- model_pt: 학습 완료된 ckpt 파일 경로
 
-### Bert
+### pred\_{model}+revised.csv 생성
 
 ```bash
 python main.py --pred --data_dir result \
---model_type bert --model_name bert+revised \
---model_pt model_ckpt/epoch=03-avg_val_acc=1.00.ckpt --max_len 64 --gpuid 0
+--model_type {model} \
+--model_name {model+revised} \
+--model_pt {model.ckpt directory} \
+--max_len {hparams.yaml 참조} \
+--gpuid 0 \
+--use_custom_classifier \
+--use_focal_loss \
+--threshold=0.6
 ```
 
+### ckpt test with user inputs
+
 ```bash
-python utils/predict_text.py --model_type bert --model_pt model_ckpt/epoch=03-avg_val_acc=1.00.ckpt --gpuid 0
+python utils/predict_text.py \
+--model_type {model} \
+--model_pt {model.ckpt directory} \
+--gpuid 0
 ```
 
-### Electra
+### pred\_{model}+revised.csv 데이터 분포 출력
 
 ```bash
-python main.py --pred \
---data_dir result \
---model_type electra \
---model_name electra+revised \
---model_pt model_ckpt/epoch=01-avg_val_acc=1.00.ckpt \
---max_len 64 --gpuid 0
+python utils/test_case.py \
+--model_type {model}
 ```
 
 5. 모델 추출
 
-```bash
-python main.py --train \
---data_dir result \
---model_type bert \
---model_name bert+revised \
---max_len 128 \
---gpuid 0 \
---use_focal_loss \
---use_custom_classifier \
---threshold 0.55
-```
-
-📦 Requirements
-이 프로젝트에서 필요한 Python 패키지는 requirements.txt에 명시되어 있습니다. 설치하려면 다음 명령어를 실행하세요:
+### ckpt to pt
 
 ```bash
-pip install -r requirements.txt
+python utils/export_model.py \
+--model_type {model} \
+--model_pt {.ckpt file directory} \
+--max_len {hparams.yaml 참조} \
+--output_dir {.pt file directory} \
+--hparams_path {hparams.yaml directory}
 ```
 
-Phase 1: Model Conversion and Optimization
+### pt to onnx
 
-1. Convert PyTorch Model to Mobile Format
-
-   - Convert the KoBERT model to TorchScript format
-   - Optimize the model size using quantization
-   - Export the model in a format compatible with PyTorch Mobile
-
-2. Prepare Model Assets
-   - Export the tokenizer vocabulary and configurations
-   - Create a lightweight version of the model suitable for mobile devices
-   - Package model files and assets for Android integration
-
-Phase 2: Android App Development
-
-1. Project Setup
-
-   - Create a new Android project in Android Studio
-   - Set up the required dependencies:
-     ```gradle
-     dependencies {
-         implementation 'org.pytorch:pytorch_android:1.13.0'
-         implementation 'org.pytorch:pytorch_android_torchvision:1.13.0'
-         // Add other necessary dependencies
-     }
-     ```
-
-2. App Architecture(example)
-
-   - by Kotlin or Dart
-
-   ```
-   app/
-   ├── java/
-   │   ├── activities/
-   │   │   ├── MainActivity.java
-   │   │   └── ResultActivity.java
-   │   ├── model/
-   │   │   ├── SpamPredictor.java
-   │   │   └── KoBertTokenizer.java
-   │   └── utils/
-   │       └── TextPreprocessor.java
-   ├── assets/
-   │   ├── spam_model.pt
-   │   └── vocab.txt
-   └── res/
-       └── layout/
-           ├── activity_main.xml
-           └── activity_result.xml
-   ```
-
-3. Core Features Implementation
-   - Create text input interface
-   - Implement real-time SMS monitoring (optional)
-   - Build prediction result display
-   - Add message history feature
-
-Phase 3: Model Integration
-
-1. Port the Prediction Logic
-
-```java
-public class SpamPredictor {
-    private Module model;
-    private KoBertTokenizer tokenizer;
-
-    public SpamPredictor(Context context) {
-        // Load the model
-        model = Module.load(assetFilePath(context, "spam_model.pt"));
-        tokenizer = new KoBertTokenizer(context);
-    }
-
-    public PredictionResult predict(String text) {
-        // Tokenize and predict
-        // Return spam probability and classification
-    }
-}
+```bash
+python utils/convert_to_onnx.py \
+--model_type {model}
 ```
 
-2. Implement Tokenizer
+## Version Issues
 
-```java
-public class KoBertTokenizer {
-    // Port the Python tokenizer logic to Java
-    // Implement necessary preprocessing
-    public IValue tokenize(String text) {
-        // Convert text to model input format
-    }
-}
+### Pytorch 2.7.0, Cuda 12.7
+
+- Pytorch 2.7.0, transformers 4.46.3 에서 연산자 문제 발생
+  - Scaled dot product attention
+
+### 해결 방법
+
+- Pytorch = 2.3.1, transformers = 4.26.1, cuda = 11.8
+
+```bash
+pip install torch==2.3.1+cu118 torchvision==0.16.1+cu118 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu118
 ```
 
-Phase 4: User Interface Development
+```bash
+pip install transformers==4.26.1
 
-1. Main Screen
+```
 
-   - Text input field
-   - "Check Message" button
-   - History of recent checks
-   - Settings button
+- 기타 패키지
 
-2. Result Screen
-   - Classification result (Spam/Ham)
-   - Confidence score
-   - Detailed analysis
-   - Action buttons (Report false positive/negative)
-
-Phase 5: Additional Features
-
-1. Real-time SMS Monitoring
-
-   - Background service for SMS monitoring
-   - Notification system for spam detection
-   - Auto-categorization of messages
-
-2. Settings and Customization
-   - Sensitivity adjustment
-   - Notification preferences
-   - Language settings
-   - Theme options
-
-Phase 6: Testing and Optimization
-
-1. Performance Testing
-
-   - Model inference speed
-   - Memory usage
-   - Battery consumption
-
-2. Accuracy Testing
-   - Test with various message types
-   - Validate Korean language handling
-   - Check edge cases
-
-Phase 7: Deployment and Maintenance
-
-1. Release Preparation
-
-   - App optimization
-   - Documentation
-   - Privacy policy
-   - Play Store listing preparation
-
-2. Post-Release
-   - Monitor performance
-   - Gather user feedback
-   - Plan updates and improvements
-
-Timeline Estimation:
-
-- Phase 1: 1-2 weeks
-- Phase 2: 1 week
-- Phase 3: 2 weeks
-- Phase 4: 1 week
-- Phase 5: 2 weeks
-- Phase 6: 1 week
-- Phase 7: 1 week
-
-Total estimated time: 9-10 weeks
+```bash
+pip install pytorch-lightning==2.0.9 torchmetrics==0.11.4
+```

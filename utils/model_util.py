@@ -31,7 +31,7 @@ def load_model(model_type, num_labels=0, labels=None, cache_dir='./cache'):
             config=config,
             trust_remote_code=True
         )
-        tokenizer = AutoTokenizer.from_pretrained("monologg/kobert")
+        tokenizer = AutoTokenizer.from_pretrained("monologg/kobert", trust_remote_code=True)
         return model, tokenizer
 
     # load pretrained KoELECTRA
@@ -60,7 +60,8 @@ def load_model(model_type, num_labels=0, labels=None, cache_dir='./cache'):
         config.id2label = {label: i for i, label in enumerate(labels)}
         model = AutoModelForSequenceClassification.from_pretrained(
             "klue/roberta-base", 
-            config=config
+            config=config,
+            trust_remote_code=True
         )
         tokenizer = AutoTokenizer.from_pretrained("klue/roberta-base")
         return model, tokenizer

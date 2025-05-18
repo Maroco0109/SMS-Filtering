@@ -41,8 +41,8 @@ def del_newline(text : str):
     return re.sub(r'[\s\n\t]+', ' ', text)
 
 def del_special_char(text : str):
-    # return re.sub(r'[^\w\s]', '', text)  # ✅ 모든 특수문자 제거 (괄호 포함)
-    return re.sub(r'[^가-힣a-zA-Z0-9\s]', '', text)
+    text = text.strip('"')  # 앞뒤 큰따옴표 제거
+    return re.sub(r'[^가-힣a-zA-Z0-9\s!?.,%\[\]~@+\-☎]', '', text)
 
 # 불필요 접두어 제거
 def clean_sender_info(text):
@@ -104,30 +104,37 @@ def remove_duplicates(data: pd.DataFrame):
     
 
 def preprocess(text: str):
-    # 민감 정보 먼저 마스킹 
-    proc_txt = remove_masking(text)
-    # URL 처리
-    proc_txt = del_url(proc_txt)
-    # 개행, 탭 등 공백 처리
-    proc_txt = del_newline(proc_txt)
-    # http 삭제
-    proc_txt = del_http(proc_txt)
-    # 특수문자 제거
-    proc_txt = del_special_char(proc_txt)
-    # 반복 문자 정규화
-    proc_txt = repeat_normalize(proc_txt, num_repeats=3)
-    # 중복 공백 제거
-    proc_txt = del_duplicated_space(proc_txt)
-    # 소문자 변환
-    proc_txt = proc_txt.lower()
-    # 추가 패턴 정리: 불필요한 밑줄, 특정 단어 제거 등
-    proc_txt = clean_extra_patterns(proc_txt)
-    # 양쪽 공백 제거
-    proc_txt = proc_txt.strip()
-    # 발신자, 불필요 접두어 제거
-    proc_txt = clean_sender_info(proc_txt)
-    # 과도한 공백 제거
-    proc_txt = clean_whitespace(proc_txt)
+    # # 민감 정보 먼저 마스킹 
+    # proc_txt = remove_masking(text)
+    # # URL 처리
+    # proc_txt = del_url(text)
+    # # 개행, 탭 등 공백 처리
+    # proc_txt = del_newline(proc_txt)
+    # # http 삭제
+    # proc_txt = del_http(proc_txt)
+    # # 특수문자 제거
+    # proc_txt = del_special_char(proc_txt)
+    # # # 반복 문자 정규화
+    # # proc_txt = repeat_normalize(proc_txt, num_repeats=3)
+    # # 중복 공백 제거
+    # proc_txt = del_duplicated_space(proc_txt)
+    # # 소문자 변환
+    # proc_txt = proc_txt.lower()
+    # # 추가 패턴 정리: 불필요한 밑줄, 특정 단어 제거 등
+    # proc_txt = clean_extra_patterns(proc_txt)
+    # # 양쪽 공백 제거
+    # proc_txt = proc_txt.strip()
+    # # 발신자, 불필요 접두어 제거
+    # proc_txt = clean_sender_info(proc_txt)
+    # # 과도한 공백 제거
+    # proc_txt = clean_whitespace(proc_txt)
+    
+    # preprocessing 간소화
+    text = text.strip('"')  # 앞뒤 큰따옴표 제거
+    text = re.sub(r"\s+", " ", text)  # 중복 공백 제거
+    text = text.replace("\n", " ").replace("\r", "")
+    text = re.sub(r'ifg@', '', text)
+    proc_txt = text
     return proc_txt
 
 def processing(args, data, is_test=False):
