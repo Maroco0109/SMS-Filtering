@@ -1,14 +1,14 @@
-# Spam SMS Filtering with Natural language models
+# Spam SMS Filtering with Pretrained Language Models
 
 1. About Project
 
-- NLP모델들을 활용하여 스팸 메세지를 필터링하는 모델 구현
-  - 스팸 메세지에 해당하는 카테고리를 설정하여 KoBERT 모델을 통해 해당 SMS가 스팸 카테고리에 포함되는지 파악하여 필터링
-  - 여러 한국어 처리 pre-trained 모델 사용 및 성능 비교 분석(https://github.com/monologg)
+- PLM(Pretrained Language Model)을 활용하여 스팸 메세지를 필터링하는 모델 구현
+  - 스팸 메세지에 해당하는 카테고리를 설정하여 해당 SMS가 스팸 카테고리에 포함되는지 파악하여 필터링
+  - 여러 한국어 처리 pre-trained 모델 사용 및 성능 비교 분석
   - KoBERT
   - KoELECTRA
-  - KoRoberta
-  - KoBigBird
+  - KoRoberta*
+  - KoBigBird*
 - Sentiment Predict Example
   - ![Sentiment Predict Example](https://github.com/user-attachments/assets/094c3de1-eddc-4d16-b66e-29129824343b)
 
@@ -49,19 +49,20 @@ Spam SMS Filtering/
 │ ├── export_model.py   # ckpt to pt
 │ ├── logger.py   # Log 파일 생성
 │ ├── model_util.py  # 한국어 LLM
-│ └── predict_text.py   # 감성 분석
+│ ├── predict_text.py   # 감성 분석
+│ ├── quantize_model.py  # onnx 모델 양자화 (float 32 -> int 8)
+│ └── test_case.py  # test case csv 파일 분석
 ├── main.py # 메인
 ├── plm.py  # 모델 호출 및 훈련
 ├── dataloader.py # 데이터로더
 ├── eval.py # 모델 평가
 ├── requirements.txt # 필요한 Python 패키지 리스트
-├── main.py # 전체 워크플로우를 실행하는 스크립트
 └── README.md # 프로젝트 설명
 ```
 
 ## 📋 Description
 
-이 프로젝트는 **한국어 처리 LLM**을 활용하여 스팸 메시지와 정상 메시지를 분류하는 모델을 구축하는 것을 목표로 합니다. 데이터 전처리, 학습, 평가 과정을 통해 전체 파이프라인을 구성하며, 각각의 과정은 재사용 가능한 모듈로 구성되어 있습니다.
+이 프로젝트는 **한국어 처리 PLM**을 활용하여 스팸 메시지와 정상 메시지를 분류하는 모델을 구축하는 것을 목표로 합니다. 데이터 전처리, 학습, 평가 과정을 통해 전체 파이프라인을 구성하며, 각각의 과정은 재사용 가능한 모듈로 구성되어 있습니다.
 
 ---
 
@@ -172,28 +173,7 @@ python utils/convert_to_onnx.py \
 --model_type {model}
 ```
 
-## Version Issues
-
-### Pytorch 2.7.0, Cuda 12.7
-
-- Pytorch 2.7.0, transformers 4.46.3 에서 연산자 문제 발생
-  - Scaled dot product attention
-
-### 해결 방법
-
-- Pytorch = 2.3.1, transformers = 4.26.1, cuda = 11.8
-
+### onnx quantization
 ```bash
-pip install torch==2.3.1+cu118 torchvision==0.16.1+cu118 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu118
-```
-
-```bash
-pip install transformers==4.26.1
-
-```
-
-- 기타 패키지
-
-```bash
-pip install pytorch-lightning==2.0.9 torchmetrics==0.11.4
+python utils/quantize_model.py
 ```
