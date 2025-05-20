@@ -24,7 +24,7 @@ class FocalLoss(torch.nn.Module):
     '''
     Focal Loss 함수 구현
     '''    
-    def __init__(self, alpha_spam: float = 0.3, alpha_ham: float = 0.7,
+    def __init__(self, alpha_spam: float = 0.2, alpha_ham: float = 0.8,
                  gamma: float = 3.0, reduction: str = 'mean'):
         super(FocalLoss, self).__init__()
         # 클래스별 α 텐서 ([spam, ham])
