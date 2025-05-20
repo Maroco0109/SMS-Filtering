@@ -24,22 +24,29 @@ class FocalLoss(torch.nn.Module):
     '''
     Focal Loss 함수 구현
     '''    
-    def __init__(self, alpha=1, gamma=2, reduction='mean'):
+    def __init__(self, alpha_spam: float = 0.3, alpha_ham: float = 0.7,
+                 gamma: float = 3.0, reduction: str = 'mean'):
         super(FocalLoss, self).__init__()
-        self.alpha = alpha
+        # 클래스별 α 텐서 ([spam, ham])
+        self.alpha = torch.tensor([alpha_spam, alpha_ham], dtype=torch.float)
         self.gamma = gamma
         self.reduction = reduction
 
-    def forward(self, inputs, targets):
+    def forward(self, inputs: torch.Tensor, targets: torch.Tensor):
+        # inputs: (B, 2) logits, targets: (B,) in {0,1}
         ce_loss = F.cross_entropy(inputs, targets, reduction='none')
-        pt = torch.exp(-ce_loss)
-        focal_loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
+        pt = torch.exp(-ce_loss)                   # p_t
+        focal_term = (1 - pt) ** self.gamma        # (1−p_t)^γ
+        # targets에 따라 spam 또는 ham α 적용
+        alpha_factor = self.alpha.to(inputs.device)[targets]
+        loss = alpha_factor * focal_term * ce_loss
+
         if self.reduction == 'mean':
-            return focal_loss.mean()
+            return loss.mean()
         elif self.reduction == 'sum':
-            return focal_loss.sum()
+            return loss.sum()
         else:
-            return focal_loss
+            return loss
 
 '''
 Description
