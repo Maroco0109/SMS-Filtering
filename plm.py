@@ -34,7 +34,7 @@ class FocalLoss(torch.nn.Module):
 
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor):
         # inputs: (B, 2) logits, targets: (B,) in {0,1}
-        ce_loss = F.cross_entropy(inputs, targets, reduction='none')
+        ce_loss = F.cross_entropy(inputs, targets, reduction='none',label_smoothing=0.1)
         pt = torch.exp(-ce_loss)                   # p_t
         focal_term = (1 - pt) ** self.gamma        # (1−p_t)^γ
         # targets에 따라 spam 또는 ham α 적용
@@ -127,7 +127,7 @@ class LightningPLM(LightningModule):
             self.loss_function = FocalLoss(alpha=1.0, gamma=2.0)
             print("✅ Using Focal Loss")
         else:
-            self.loss_function = nn.CrossEntropyLoss()
+            self.loss_function = nn.CrossEntropyLoss(label_smoothing=0.1)
             print("✅ Using CrossEntropyLoss")
 
         self.softmax = nn.Softmax(dim=1)
@@ -144,6 +144,7 @@ class LightningPLM(LightningModule):
         parser.add_argument('--use_focal_loss', action='store_true', help='Use focal loss if set')
         parser.add_argument('--use_custom_classifier', action='store_true', help='Use custom classifier if set')
         parser.add_argument('--freeze_encoder', action='store_true', help='Freeze encoder layers 0~3')
+        parser.add_argument('--weight_decay', type=float, default=0.05,help='Weight decay for AdamW')
         return parser
 
 
@@ -245,7 +246,7 @@ class LightningPLM(LightningModule):
         optimizer_grouped_parameters = [
             {
                 "params": [p for n, p in self.named_parameters() if not any(nd in n for nd in no_decay)],
-                "weight_decay": 0.05,   # 25.05.02 0.01 -> 0.05
+                "weight_decay": self.hparams.weight_decay,
             },
             {
                 "params": [p for n, p in self.named_parameters() if any(nd in n for nd in no_decay)],
