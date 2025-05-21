@@ -64,23 +64,25 @@ huggingface에 공개된 한국어 사전학습 모델 사용
 '''
 # 추가 레이어 생성
 class CustomClassifier(torch.nn.Module):
-    def __init__(self, hidden_size, num_labels=2):
+    def __init__(self, hidden_size, num_labels=2, dropout_prob=0.3):
         super(CustomClassifier, self).__init__()
-        self.classifier = torch.nn.Sequential(
-            torch.nn.Linear(hidden_size, 512),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(0.5),
-            torch.nn.Linear(512, 256),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(0.5),
-            torch.nn.Linear(256, 128),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(0.5),
-            torch.nn.Linear(128, num_labels)
-        )
+        self.dropout1 = nn.Dropout(dropout_prob)
+        self.linear1  = nn.Linear(hidden_size, hidden_size)
+        self.act      = nn.GELU()             # BERT/ELECTRA 기본 활성화
+        self.dropout2 = nn.Dropout(dropout_prob)
+        self.out      = nn.Linear(hidden_size, num_labels)
 
-    def forward(self, x):
-        return self.classifier(x)
+    def forward(self, cls_emb):
+        x = self.dropout1(cls_emb)
+        x = self.linear1(x)
+        x = self.act(x)
+        x = self.dropout2(x)
+        
+        # residual connection
+        x = x + cls_emb
+        
+        logits = self.out(x)
+        return logits
     
 class LightningPLM(LightningModule):
     def __init__(self, hparams):
