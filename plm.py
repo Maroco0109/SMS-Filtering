@@ -34,7 +34,7 @@ class FocalLoss(torch.nn.Module):
 
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor):
         # inputs: (B, 2) logits, targets: (B,) in {0,1}
-        ce_loss = F.cross_entropy(inputs, targets, reduction='none')
+        ce_loss = F.cross_entropy(inputs, targets, reduction='none',label_smoothing=0.1)
         pt = torch.exp(-ce_loss)                   # p_t
         focal_term = (1 - pt) ** self.gamma        # (1−p_t)^γ
         # targets에 따라 spam 또는 ham α 적용
@@ -64,23 +64,25 @@ huggingface에 공개된 한국어 사전학습 모델 사용
 '''
 # 추가 레이어 생성
 class CustomClassifier(torch.nn.Module):
-    def __init__(self, hidden_size, num_labels=2):
+    def __init__(self, hidden_size, num_labels=2, dropout_prob=0.3):
         super(CustomClassifier, self).__init__()
-        self.classifier = torch.nn.Sequential(
-            torch.nn.Linear(hidden_size, 512),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(0.5),
-            torch.nn.Linear(512, 256),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(0.5),
-            torch.nn.Linear(256, 128),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(0.5),
-            torch.nn.Linear(128, num_labels)
-        )
+        self.dropout1 = nn.Dropout(dropout_prob)
+        self.linear1  = nn.Linear(hidden_size, hidden_size)
+        self.act      = nn.GELU()             # BERT/ELECTRA 기본 활성화
+        self.dropout2 = nn.Dropout(dropout_prob)
+        self.out      = nn.Linear(hidden_size, num_labels)
 
-    def forward(self, x):
-        return self.classifier(x)
+    def forward(self, cls_emb):
+        x = self.dropout1(cls_emb)
+        x = self.linear1(x)
+        x = self.act(x)
+        x = self.dropout2(x)
+        
+        # residual connection
+        x = x + cls_emb
+        
+        logits = self.out(x)
+        return logits
     
 class LightningPLM(LightningModule):
     def __init__(self, hparams):
@@ -127,7 +129,7 @@ class LightningPLM(LightningModule):
             self.loss_function = FocalLoss(alpha=1.0, gamma=2.0)
             print("✅ Using Focal Loss")
         else:
-            self.loss_function = nn.CrossEntropyLoss()
+            self.loss_function = nn.CrossEntropyLoss(label_smoothing=0.1)
             print("✅ Using CrossEntropyLoss")
 
         self.softmax = nn.Softmax(dim=1)
@@ -144,6 +146,7 @@ class LightningPLM(LightningModule):
         parser.add_argument('--use_focal_loss', action='store_true', help='Use focal loss if set')
         parser.add_argument('--use_custom_classifier', action='store_true', help='Use custom classifier if set')
         parser.add_argument('--freeze_encoder', action='store_true', help='Freeze encoder layers 0~3')
+        parser.add_argument('--weight_decay', type=float, default=0.05,help='Weight decay for AdamW')
         return parser
 
 
@@ -245,7 +248,7 @@ class LightningPLM(LightningModule):
         optimizer_grouped_parameters = [
             {
                 "params": [p for n, p in self.named_parameters() if not any(nd in n for nd in no_decay)],
-                "weight_decay": 0.05,   # 25.05.02 0.01 -> 0.05
+                "weight_decay": self.hparams.weight_decay,
             },
             {
                 "params": [p for n, p in self.named_parameters() if any(nd in n for nd in no_decay)],

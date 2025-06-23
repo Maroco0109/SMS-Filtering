@@ -7,8 +7,8 @@
   - 여러 한국어 처리 pre-trained 모델 사용 및 성능 비교 분석
   - KoBERT
   - KoELECTRA
-  - KoRoberta*
-  - KoBigBird*
+  - KoRoberta\*
+  - KoBigBird\*
 - Sentiment Predict Example
   - ![Sentiment Predict Example](https://github.com/user-attachments/assets/094c3de1-eddc-4d16-b66e-29129824343b)
 
@@ -174,6 +174,23 @@ python utils/convert_to_onnx.py \
 ```
 
 ### onnx quantization
+
 ```bash
 python utils/quantize_model.py
 ```
+
+### Train Parameters
+
+| 파라미터                | KoBERT                       | KoELECTRA                                | KLUE-RoBERTa                 |
+| ----------------------- | ---------------------------- | ---------------------------------------- | ---------------------------- |
+| **모델 이름**           | monologg/kobert              | monologg/koelectra-base-v3-discriminator | klue/roberta-base            |
+| **최대 시퀀스 길이**    | 128                          | 128                                      | 256                          |
+| **배치 크기**           | 32                           | 32                                       | 16                           |
+| **학습률(LR)**          | 5 × 10⁻⁵                     | 3 × 10⁻⁵                                 | 2 × 10⁻⁵                     |
+| **에폭 수**             | 3                            | 4                                        | 3–4                          |
+| **워밍업 비율**         | 10%                          | 10%                                      | 10%                          |
+| **Weight Decay**        | 0.01                         | 0.01                                     | 0.01                         |
+| **Optimizer**           | AdamW                        | AdamW                                    | AdamW                        |
+| **스케줄러**            | Linear Decay with Warmup     | Linear Decay with Warmup                 | Linear Decay with Warmup     |
+| **그레이디언트 클리핑** | max_norm=1.0                 | max_norm=1.0                             | max_norm=1.0                 |
+| **Mixed Precision**     | 권장 (autocast + GradScaler) | 권장 (autocast + GradScaler)             | 권장 (autocast + GradScaler) |
