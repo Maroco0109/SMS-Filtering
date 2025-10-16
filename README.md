@@ -194,3 +194,4 @@ python utils/quantize_model.py
 | **스케줄러**            | Linear Decay with Warmup     | Linear Decay with Warmup                 | Linear Decay with Warmup     |
 | **그레이디언트 클리핑** | max_norm=1.0                 | max_norm=1.0                             | max_norm=1.0                 |
 | **Mixed Precision**     | 권장 (autocast + GradScaler) | 권장 (autocast + GradScaler)             | 권장 (autocast + GradScaler) |
+---
