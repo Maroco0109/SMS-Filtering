@@ -1,5 +1,15 @@
 # SMS Filtering App - TODO
 
+## PyTorch 모델 통합 작업 (Python FastAPI)
+- [x] Python FastAPI 모델 서버 구축
+- [x] Hugging Face Transformers 통합
+- [x] ML 클라이언트 TypeScript 구현
+- [x] API 라우터 업데이트 (PyTorch + LLM 폴백)
+- [x] 헬스 체크 및 에러 핸들링
+- [x] 문서 작성
+- [ ] 실제 테스트 (모델 서버 실행 필요)
+- [ ] GitHub 업데이트
+
 ## Phase 1: 기본 구조 및 UI 구현
 - [x] 앱 브랜딩 (로고 생성 및 app.config.ts 업데이트)
 - [x] 탭 네비게이션 구조 설정 (Home, Messages, Settings)
@@ -44,6 +54,4 @@
 - [x] 모든 기능 테스트
 - [x] UI/UX 구현 완료
 - [x] 문서 업데이트
-- [ ] 체크포인트 생성
-
-
+- [x] 체크포인트 생성

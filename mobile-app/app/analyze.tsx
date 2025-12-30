@@ -40,7 +40,7 @@ export default function AnalyzeScreen() {
       const apiResponse: AnalyzeResponse = {
         classification: apiResult.classification,
         confidence: apiResult.confidence,
-        model: apiResult.model,
+        model: apiResult.model as ModelType,
       };
 
       setResult(apiResponse);
